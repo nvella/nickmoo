@@ -1,0 +1,8 @@
+Welcome to NickMOO.
+
+ NickMOO is an online text game (think text adventure) that is able to be
+reprogrammed _while_ you are playing it. And it's also object oriented. Hah!
+To be honest, this is not a new concept. This has existed in many forms before,
+most notably LambdaMOO which has been in existence since the early 1990s. How is
+NickMOO different? Well, it's mostly not. NickMOO is essentially my
+interpretation and implementation of the engine and system.
