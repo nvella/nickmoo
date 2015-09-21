@@ -21,8 +21,7 @@ NickMOO is built with NodeJS and MongoDB.
 ## NML
 
 At the core of any MOO is an in-game scripting language and at the core of NickMOO is a custom language called NML, or the NickMOO Language.
-
-I chose to create a custom language instead of sandboxing Javascript or Lua as I wanted to have a common language for both player control and object scripting. NML is a very informal language where most structure is optional.
+NML is used for player control and in-game scripting, it is a very informal language where most structure is optional.
 
 For example, to send a message to the chat, a player could write
 
