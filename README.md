@@ -11,7 +11,7 @@ NickMOO is built with NodeJS and MongoDB.
 - [x] Welcome message
 - [ ] NML
  - [ ] Script Parser (in progress - 80% complete)
- - [ ] VM
+ - [ ] VM (development started)
 - [ ] Objects
  - [ ] Javascript->DB mapping
 - [ ] Player handling
