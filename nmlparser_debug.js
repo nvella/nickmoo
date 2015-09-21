@@ -13,7 +13,7 @@ function p(obj) {
 }
 
 function runCode(code) {
-  console.log("Running code:\n"+code+"\n------");
+  console.log('----');
   try {
     p(P.codeToAst(code));
   } catch(err) {
