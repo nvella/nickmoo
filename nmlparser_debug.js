@@ -14,11 +14,11 @@ function p(obj) {
 
 function runCode(code) {
   console.log('----');
-  try {
+  //try {
     p(P.codeToAst(code));
-  } catch(err) {
-    console.log('Syntax error\n'+err);
-  }
+  //} catch(err) {
+    //console.log('Syntax error\n'+err);
+  //}
 }
 
 function doPrompt() {
