@@ -142,10 +142,7 @@ describe('NML.VM', function() {
       var expr = NML.Parser.parseGroup(NML.Parser.parseLine('5 + 10 * (6 + 4)'));
       vm.evalExpr(expr, function(err, value) {
         expect(err).to.be.null;
-        // The expression evaluator evaluates from left to right. I'm still
-        // considering if it's worth the effort to implement an order of
-        // operations.
-        expect(value).to.equal((5 + 10) * (6 + 4));
+        expect(value).to.equal(5 + 10 * (6 + 4));
         done();
       });
     });
