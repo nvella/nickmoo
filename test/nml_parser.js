@@ -535,5 +535,26 @@ describe('NML.Parser', function() {
       expect(function(){Parser.codeToAst('if $myVar\nsay hi');}).to.throw(Error,
         '1 block(s) are still open.');
     });
+
+    it('throws an error on attempt to end nonexistant block', function() {
+      expect(function(){Parser.codeToAst('say hi\nend');}).to.throw(Error,
+        'line 2: no blocks to end (no blocks to end on stack)');
+    });
+
+    it('throws an error if an if/while is started without an expr', function() {
+      expect(function(){Parser.codeToAst('if\nsay hi\nend');}).to.throw(Error,
+        'line 1: if usage: if <expr>');
+    });
+
+    it('throws an error if an assignment doesn\'t have two sides', function() {
+      expect(function(){Parser.codeToAst('$a =\nsay hi');}).to.throw(Error,
+        'line 1: an assignment must have two sides');
+    });
+
+    it('throws an error if a non-assignable has attempted to be assigned',
+      function() {
+      expect(function(){Parser.codeToAst('4 = $a\nsay hi');}).to.throw(Error,
+        'line 1: type on left of assignment cannot be set');
+    });
   });
 });
