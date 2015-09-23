@@ -403,4 +403,132 @@ describe('NML.Parser', function() {
       ]);
     });
   });
+
+  describe('codeToAst', function() {
+    it('handles verbcalls', function() {
+      expect(Parser.codeToAst('say Hi')).to.eql([
+        {
+          type: 'verbcall',
+          verb: 'say',
+          directObj: ['Hi'],
+          prepos: null,
+          indirectObj: null,
+          params: ['Hi']
+        }
+      ]);
+    });
+
+    it('handles verbcalls with prepositions', function() {
+      expect(Parser.codeToAst('put apple in box')).to.eql([
+        {
+          type: 'verbcall',
+          verb: 'put',
+          directObj: ['apple'],
+          prepos: 'in',
+          indirectObj: ['box'],
+          params: ['apple', 'in', 'box']
+        }
+      ]);
+    });
+
+    it('handles verbcalls with params in parens', function() {
+      expect(Parser.codeToAst("say('Hello there' 4)")).to.eql([
+        {
+          type: 'verbcall',
+          verb: 'say',
+          directObj: ['Hello there', 4],
+          prepos: null,
+          indirectObj: null,
+          params: ['Hello there', 4]
+        }
+      ]);
+    });
+
+    it('handles if statements', function() {
+      expect(Parser.codeToAst('if true\nend')).to.eql([
+        {
+          type: 'if',
+          expr: [true],
+          block: []
+        }
+      ]);
+    });
+
+    it('handles while statements', function() {
+      expect(Parser.codeToAst('while true\nend')).to.eql([
+        {
+          type: 'while',
+          expr: [true],
+          block: []
+        }
+      ]);
+    });
+
+    it('handles blocks', function() {
+      expect(Parser.codeToAst('if true\nsay hi\nend\nsay bye')).to.eql([
+        {
+          type: 'if',
+          expr: [true],
+          block: [
+            {
+              type: 'verbcall',
+              verb: 'say',
+              directObj: ['hi'],
+              prepos: null,
+              indirectObj: null,
+              params: ['hi']
+            }
+          ]
+        },
+        {
+          type: 'verbcall',
+          verb: 'say',
+          directObj: ['bye'],
+          prepos: null,
+          indirectObj: null,
+          params: ['bye']
+        }
+      ]);
+    });
+
+    it('handles expressions referencing variables in if/while', function() {
+      expect(Parser.codeToAst('if $myVar == 4\nsay hi\nend')).to.eql([
+        {
+          type: 'if',
+          expr: [{type: 'var', name: 'myVar'}, '==', 4],
+          block: [
+            {
+              type: 'verbcall',
+              verb: 'say',
+              directObj: ['hi'],
+              prepos: null,
+              indirectObj: null,
+              params: ['hi']
+            }
+          ]
+        }
+      ]);
+    });
+
+    it('handles nested expressions in if/while', function() {
+      expect(Parser.codeToAst('if $myVar == ($myOtherVar + 2)\nsay hi\nend')).
+        to.eql([
+        {
+          type: 'if',
+          expr: [{type: 'var', name: 'myVar'}, '==', [{type: 'var', name:
+            'myOtherVar'}, '+', 2]],
+          block: [
+            {
+              type: 'verbcall',
+              verb: 'say',
+              directObj: ['hi'],
+              prepos: null,
+              indirectObj: null,
+              params: ['hi']
+            }
+          ]
+        }
+      ]);
+    });
+  });
 });
