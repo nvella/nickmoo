@@ -73,5 +73,75 @@ describe('NML.Parser', function() {
     });
   });
 
+  describe('prepositionsFromParsedLine', function() {
+    it('is able to find simple prepositions', function() {
+      var line = Parser.parseLine('put apple in box');
+      var prepositions = Parser.prepositionsFromParsedLine(line);
+      expect(prepositions).to.eql([
+        {
+          prepos: 'in',
+          size: 1, // one word
+          found: 2 // third component in line
+        }
+      ]);
+    });
 
+    it('is able to find multiple simple prepositions', function() {
+      var line = Parser.parseLine('point to apple in box');
+      var prepositions = Parser.prepositionsFromParsedLine(line);
+      expect(prepositions).to.eql([
+        {
+          prepos: 'to',
+          size: 1, // one word
+          found: 1 // second component in line
+        },
+        {
+          prepos: 'in',
+          size: 1,
+          found: 3
+        }
+      ]);
+    });
+
+    it('is able to find multi-word prepositions', function() {
+      var line = Parser.parseLine('put apple in front of box');
+      var prepositions = Parser.prepositionsFromParsedLine(line);
+      expect(prepositions).to.eql([
+        {
+          prepos: 'in front of',
+          size: 3,
+          found: 2
+        }
+      ]);
+    });
+
+    it('is able to find multiple multi-word prepositions', function() {
+      var line = Parser.parseLine('eat on top of table in front of box');
+      var prepositions = Parser.prepositionsFromParsedLine(line);
+      expect(prepositions).to.eql([
+        {
+          prepos: 'in front of',
+          size: 3,
+          found: 5
+        },
+        {
+          prepos: 'on top of',
+          size: 3,
+          found: 1
+        }
+      ]);
+    });
+
+    it('disregards smaller available prepositions when larger ones are available', function() {
+      var line = Parser.parseLine('eat apple in front of box');
+      var prepositions = Parser.prepositionsFromParsedLine(line);
+      expect(prepositions).to.eql([
+        {
+          prepos: 'in front of',
+          size: 3, // one word
+          found: 2 // second component in line
+        }
+      ]);
+    });
+  });
 });
