@@ -114,7 +114,7 @@ describe('NML.VM', function() {
       var mobj = { getProp: function(name, callback) {
         expect(name).to.equal('myProp');
         expect(callback).to.not.be.null;
-        callback(null, ['apple', 'banana']);
+        callback(null, {type: 'array', ctx: ['apple', 'banana']});
       }};
       var vm = new NML.VM(undefined, mobj);
 
