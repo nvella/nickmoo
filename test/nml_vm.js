@@ -37,4 +37,42 @@ describe('NML.VM', function() {
       expect(NML.VM.findIns([2, 1, 0], ast).params).to.eql(['lol']);
     });
   });
+
+  describe('#resolveValue', function() {
+    it('passes through numbers', function(done) {
+      var vm = new NML.VM();
+      vm.resolveValue(4, function(err, value) {
+        expect(err).to.be.null;
+        expect(value).to.equal(4);
+        done();
+      });
+    });
+
+    it('passes through booleans', function(done) {
+      var vm = new NML.VM();
+      vm.resolveValue(true, function(err, value) {
+        expect(err).to.be.null;
+        expect(value).to.equal(true);
+        done();
+      });
+    });
+
+    it('passes through strings', function(done) {
+      var vm = new NML.VM();
+      vm.resolveValue('hello', function(err, value) {
+        expect(err).to.be.null;
+        expect(value).to.equal('hello');
+        done();
+      });
+    });
+
+    it('passes through a virtual null', function(done) {
+      var vm = new NML.VM();
+      vm.resolveValue({type: 'null', value: 'null'}, function(err, value) {
+        expect(err).to.be.null;
+        expect(value).to.eql({type: 'null', value: 'null'});
+        done();
+      });
+    });
+  });
 });
