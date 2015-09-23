@@ -125,4 +125,143 @@ describe('NML.VM', function() {
       });
     });
   });
+
+  describe('#evalExpr', function() {
+    it('can evaluate a simple mathematical expression', function(done) {
+      var vm = new NML.VM();
+      vm.evalExpr([5, '+', 10], function(err, value) {
+        expect(err).to.be.null;
+        expect(value).to.equal(15);
+        done();
+      });
+    });
+
+    it('can evaluate a mathematical expression with groups taking priority',
+      function(done) {
+      var vm = new NML.VM();
+      var expr = NML.Parser.parseGroup(NML.Parser.parseLine('5 + 10 * (6 + 4)'));
+      vm.evalExpr(expr, function(err, value) {
+        expect(err).to.be.null;
+        // The expression evaluator evaluates from left to right. I'm still
+        // considering if it's worth the effort to implement an order of
+        // operations.
+        expect(value).to.equal((5 + 10) * (6 + 4));
+        done();
+      });
+    });
+
+    it('can evaluate a mathematical expression which references a local var',
+      function(done) {
+      var vm = new NML.VM();
+      vm.state.localVars.myVar = 10;
+      var expr = NML.Parser.parseGroup(NML.Parser.parseLine('5 + $myVar'));
+      vm.evalExpr(expr, function(err, value) {
+        expect(err).to.be.null;
+        expect(value).to.equal(15);
+        done();
+      });
+    });
+
+    it('can evaluate a mathematical expression which references a local var ' +
+      'in a group', function(done) {
+      var vm = new NML.VM();
+      vm.state.localVars.myVar = 10;
+      var expr = NML.Parser.parseGroup(NML.Parser.parseLine('5 + ($myVar + 1)'));
+      vm.evalExpr(expr, function(err, value) {
+        expect(err).to.be.null;
+        expect(value).to.equal(16);
+        done();
+      });
+    });
+
+    it('can evaluate a simple boolean expression', function(done) {
+      var vm = new NML.VM();
+      var expr = NML.Parser.parseGroup(NML.Parser.parseLine('10 == 10'));
+      vm.evalExpr(expr, function(err, value) {
+        expect(err).to.be.null;
+        expect(value).to.be.true;
+        done();
+      });
+    });
+
+    it('can evaluate a simple boolean expression to be false', function(done) {
+      var vm = new NML.VM();
+      var expr = NML.Parser.parseGroup(NML.Parser.parseLine('10 == 11'));
+      vm.evalExpr(expr, function(err, value) {
+        expect(err).to.be.null;
+        expect(value).to.be.false;
+        done();
+      });
+    });
+
+    it('can evaluate an inverse boolean expression (!=)', function(done) {
+      var vm = new NML.VM();
+      var expr = NML.Parser.parseGroup(NML.Parser.parseLine('10 != 11'));
+      vm.evalExpr(expr, function(err, value) {
+        expect(err).to.be.null;
+        expect(value).to.be.true;
+        done();
+      });
+    });
+
+    it('can AND two expressions using the && operator', function(done) {
+      var vm = new NML.VM();
+      var expr = NML.Parser.parseGroup(NML.Parser.parseLine('10 == 10 && 11 == 11'));
+      vm.evalExpr(expr, function(err, value) {
+        expect(err).to.be.null;
+        expect(value).to.be.true;
+        done();
+      });
+    });
+
+    it('can AND two expressions using the and operator', function(done) {
+      var vm = new NML.VM();
+      var expr = NML.Parser.parseGroup(NML.Parser.parseLine('10 == 10 and 11 == 11'));
+      vm.evalExpr(expr, function(err, value) {
+        expect(err).to.be.null;
+        expect(value).to.be.true;
+        done();
+      });
+    });
+
+    it('can AND two expressions to be false', function(done) {
+      var vm = new NML.VM();
+      var expr = NML.Parser.parseGroup(NML.Parser.parseLine('10 == 10 && 11 == 10'));
+      vm.evalExpr(expr, function(err, value) {
+        expect(err).to.be.null;
+        expect(value).to.be.false;
+        done();
+      });
+    });
+
+    it('can OR two expressions using the || operator', function(done) {
+      var vm = new NML.VM();
+      var expr = NML.Parser.parseGroup(NML.Parser.parseLine('10 == 10 || 11 == 10'));
+      vm.evalExpr(expr, function(err, value) {
+        expect(err).to.be.null;
+        expect(value).to.be.true;
+        done();
+      });
+    });
+
+    it('can OR two expressions using the or operator', function(done) {
+      var vm = new NML.VM();
+      var expr = NML.Parser.parseGroup(NML.Parser.parseLine('10 == 10 or 11 == 10'));
+      vm.evalExpr(expr, function(err, value) {
+        expect(err).to.be.null;
+        expect(value).to.be.true;
+        done();
+      });
+    });
+
+    it('can OR two expressions to be false', function(done) {
+      var vm = new NML.VM();
+      var expr = NML.Parser.parseGroup(NML.Parser.parseLine('10 == 11 || 11 == 10'));
+      vm.evalExpr(expr, function(err, value) {
+        expect(err).to.be.null;
+        expect(value).to.be.false;
+        done();
+      });
+    });
+  });
 });
