@@ -288,4 +288,24 @@ describe('NML.VM', function() {
       });
     });
   });
+
+  describe('#stepOnce', function() {
+    it('assign a local var', function(done) {
+      var vm = new NML.VM();
+      vm.state.ast = NML.Parser.codeToAst('$myVar = 4');
+      vm.stepOnce(function(err) {
+        expect(vm.state.localVars.myVar).to.equal(4);
+        done();
+      });
+    });
+
+    it('throws an error at the end of the script', function(done) {
+      var vm = new NML.VM();
+      vm.state.ast = NML.Parser.codeToAst('$myVar = 4');
+      vm.stepOnce(function(err) {
+        expect(err).to.be.an.instanceof(NML.Errors.EndOfScriptError);
+        done();
+      });
+    });
+  });
 });
