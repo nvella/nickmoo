@@ -1,4 +1,4 @@
-# NickMOO
+# NickMOO [![Build Status](https://travis-ci.org/nvella/nickmoo.svg?branch=master)](https://travis-ci.org/nvella/nickmoo)
 
 NickMOO in it's simplest terms is an online text game where a major gameplay element is reprogramming and adding content to the game while you are playing it. This is historically known as MOO (MUD-Object-Oriented), which is a descendant of the MUD genre. In terms of originality, NickMOO doesn't introduce any new concepts to the MOO genre, it's simply my interpretation and implementation of the genre. Because of this, NickMOO is incompatible with all current MOO implementations, most notably LambdaMOO.
 
