@@ -74,5 +74,55 @@ describe('NML.VM', function() {
         done();
       });
     });
+
+    it('resolves a local variable', function(done) {
+      var vm = new NML.VM();
+      vm.state.localVars.myVar = 'foo bar';
+      vm.resolveValue({type: 'var', name: 'myVar'}, function(err, value) {
+        expect(err).to.be.null;
+        expect(value).to.eql('foo bar');
+        done();
+      });
+    });
+
+    it('resolves an object property', function(done) {
+      var mobj = { getProp: function(name, callback) {
+        expect(name).to.equal('myProp');
+        expect(callback).to.not.be.null;
+        callback(null, 42);
+      }};
+      var vm = new NML.VM(undefined, mobj);
+
+      vm.resolveValue({type: 'prop', name: 'myProp'}, function(err, value) {
+        expect(err).to.be.null;
+        expect(value).to.equal(42);
+        done();
+      });
+    });
+
+    it('resolves an array element on a local variable', function(done) {
+      var vm = new NML.VM();
+      vm.state.localVars.myVar = {type: 'array', ctx: ['apple', 'banana']};
+      vm.resolveValue({type: 'var', name: 'myVar', ctx: [1]}, function(err, value) {
+        expect(err).to.be.null;
+        expect(value).to.equal('banana');
+        done();
+      });
+    });
+
+    it('resolves an array element on an object property', function(done) {
+      var mobj = { getProp: function(name, callback) {
+        expect(name).to.equal('myProp');
+        expect(callback).to.not.be.null;
+        callback(null, ['apple', 'banana']);
+      }};
+      var vm = new NML.VM(undefined, mobj);
+
+      vm.resolveValue({type: 'prop', name: 'myProp', ctx: [1]}, function(err, value) {
+        expect(err).to.be.null;
+        expect(value).to.equal('banana');
+        done();
+      });
+    });
   });
 });
