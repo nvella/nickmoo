@@ -124,6 +124,33 @@ describe('NML.VM', function() {
         done();
       });
     });
+
+    it('throws an error when trying to index a nonindexable local var',
+      function(done) {
+      var vm = new NML.VM();
+      vm.state.localVars.myVar = 'banana';
+      vm.resolveValue({type: 'var', name: 'myVar', ctx: [1]}, function(err, value) {
+        expect(err).to.be.a('error');
+        expect(err.message).to.equal('attempted to index nonindexable local var');
+        done();
+      });
+    });
+
+    it('throws an error when trying to index a nonindexable object prop',
+      function(done) {
+      var mobj = { getProp: function(name, callback) {
+        expect(name).to.equal('myProp');
+        expect(callback).to.not.be.null;
+        callback(null, 'banana');
+      }};
+      var vm = new NML.VM(undefined, mobj);
+
+      vm.resolveValue({type: 'prop', name: 'myProp', ctx: [1]}, function(err, value) {
+        expect(err).to.be.a('error');
+        expect(err.message).to.equal('attempted to index nonindexable object prop');
+        done();
+      });
+    });
   });
 
   describe('#evalExpr', function() {
