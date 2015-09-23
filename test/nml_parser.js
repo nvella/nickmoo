@@ -530,5 +530,10 @@ describe('NML.Parser', function() {
         }
       ]);
     });
+
+    it('throws an error if blocks are left open', function() {
+      expect(function(){Parser.codeToAst('if $myVar\nsay hi');}).to.throw(Error,
+        '1 block(s) are still open.');
+    });
   });
 });
