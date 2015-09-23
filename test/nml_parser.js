@@ -144,4 +144,58 @@ describe('NML.Parser', function() {
       ]);
     });
   });
+
+  describe('verbcallFromParsedLine', function() {
+    it('supports single word (verb only) verbcalls', function() {
+      var line = Parser.parseLine('north');
+      var verbcall = Parser.verbcallFromParsedLine(line);
+      expect(verbcall).to.eql({
+        type: 'verbcall',
+        verb: 'north',
+        directObj: null,
+        prepos: null,
+        indirectObj: null,
+        params: []
+      });
+    });
+
+    it('supports verbcalls with direct objects', function() {
+      var line = Parser.parseLine('eat apple');
+      var verbcall = Parser.verbcallFromParsedLine(line);
+      expect(verbcall).to.eql({
+        type: 'verbcall',
+        verb: 'eat',
+        directObj: ['apple'],
+        prepos: null,
+        indirectObj: null,
+        params: ['apple']
+      });
+    });
+
+    it('supports verbcalls with direct and indirect objects', function() {
+      var line = Parser.parseLine('put apple in box');
+      var verbcall = Parser.verbcallFromParsedLine(line);
+      expect(verbcall).to.eql({
+        type: 'verbcall',
+        verb: 'put',
+        directObj: ['apple'],
+        prepos: 'in',
+        indirectObj: ['box'],
+        params: ['apple', 'in', 'box']
+      });
+    });
+
+    it('disregards prepositions before the direct object', function() {
+      var line = Parser.parseLine('write using pencil on paper');
+      var verbcall = Parser.verbcallFromParsedLine(line);
+      expect(verbcall).to.eql({
+        type: 'verbcall',
+        verb: 'write',
+        directObj: ['pencil'],
+        prepos: 'on',
+        indirectObj: ['paper'],
+        params: ['using', 'pencil', 'on', 'paper']
+      });
+    });
+  });
 });
