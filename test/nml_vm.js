@@ -290,7 +290,7 @@ describe('NML.VM', function() {
   });
 
   describe('#stepOnce', function() {
-    it('assign a local var', function(done) {
+    it('can assign a local var', function(done) {
       var vm = new NML.VM();
       vm.state.ast = NML.Parser.codeToAst('$myVar = 4');
       vm.stepOnce(function(err) {
