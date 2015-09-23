@@ -198,4 +198,85 @@ describe('NML.Parser', function() {
       });
     });
   });
+
+  describe('parseGroup', function() {
+    it('creates verbcalls when the first component is a string and level is 0',
+    function() {
+      var line = Parser.parseLine('say Hello world');
+      expect(Parser.parseGroup(line, 0, 0)).to.eql([
+        {
+          type: 'verbcall',
+          verb: 'say',
+          directObj: ['Hello', 'world'],
+          prepos: null,
+          indirectObj: null,
+          params: ['Hello', 'world']
+        }
+      ]);
+    });
+
+    it('doesn\'t create a verbcall when first component is string and level > 0',
+      function() {
+      var line = Parser.parseLine('say Hello world');
+      expect(Parser.parseGroup(line, 1, 0)).to.eql([
+        'say',
+        'Hello',
+        'world'
+      ]);
+    });
+
+    it('always creates a verbcall when a word is followed by a group (parens)',
+      function() {
+      for(var i = 0; i < 3; i++) {
+        var line = Parser.parseLine('say(Hello world)');
+        expect(Parser.parseGroup(line, i, 0)).to.eql([
+          {
+            type: 'verbcall',
+            verb: 'say',
+            directObj: ['Hello', 'world'],
+            prepos: null,
+            indirectObj: null,
+            params: ['Hello', 'world']
+          }
+        ]);
+      }
+    });
+
+    it('creates simple assignments', function() {
+      var line = Parser.parseLine('$myVar = 4');
+      expect(Parser.parseGroup(line, 0, 0)).to.eql([
+        {
+          type: 'assign',
+          op: '=',
+          dst: {
+            type: 'var',
+            name: 'myVar'
+          },
+          src: [4]
+        }
+      ]);
+    });
+
+    it('creates assignments based on the return val of a verbcall', function() {
+      var line = Parser.parseLine('$myVar = getValue()');
+      expect(Parser.parseGroup(line, 0, 0)).to.eql([
+        {
+          type: 'assign',
+          op: '=',
+          dst: {
+            type: 'var',
+            name: 'myVar'
+          },
+          src: [{
+            type: 'verbcall',
+            verb: 'getValue',
+            directObj: null,
+            prepos: null,
+            indirectObj: null,
+            params: []
+          }]
+        }
+      ]);
+    });
+  });
 });
