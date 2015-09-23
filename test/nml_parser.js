@@ -242,6 +242,79 @@ describe('NML.Parser', function() {
       }
     });
 
+    it('is able to create a verbcall with a verbcall as a parm', function() {
+      var line = Parser.parseLine('firstVerb(secondVerb())');
+      expect(Parser.parseGroup(line, 0, 0)).to.eql([
+        {
+          type: 'verbcall',
+          verb: 'firstVerb',
+          directObj: [{
+            type: 'verbcall',
+            verb: 'secondVerb',
+            directObj: null,
+            prepos: null,
+            indirectObj: null,
+            params: []
+          }],
+          prepos: null,
+          indirectObj: null,
+          params: [{
+            type: 'verbcall',
+            verb: 'secondVerb',
+            directObj: null,
+            prepos: null,
+            indirectObj: null,
+            params: []
+          }]
+        }
+      ]);
+    });
+
+    it('is able to create a bareword verbcall with a verbcall as a parm',
+      function() {
+      var line = Parser.parseLine('firstVerb secondVerb()');
+      expect(Parser.parseGroup(line, 0, 0)).to.eql([
+        {
+          type: 'verbcall',
+          verb: 'firstVerb',
+          directObj: [{
+            type: 'verbcall',
+            verb: 'secondVerb',
+            directObj: null,
+            prepos: null,
+            indirectObj: null,
+            params: []
+          }],
+          prepos: null,
+          indirectObj: null,
+          params: [{
+            type: 'verbcall',
+            verb: 'secondVerb',
+            directObj: null,
+            prepos: null,
+            indirectObj: null,
+            params: []
+          }]
+        }
+      ]);
+    });
+
+    it('it won\'t create a bareword verbcall with a verbcall as a parm when ' +
+      'lvl>0', function() {
+      var line = Parser.parseLine('firstVerb secondVerb()');
+      expect(Parser.parseGroup(line, 1, 0)).to.eql([
+        'firstVerb',
+        {
+          type: 'verbcall',
+          verb: 'secondVerb',
+          directObj: null,
+          prepos: null,
+          indirectObj: null,
+          params: []
+        }
+      ]);
+    });
+
     it('creates simple assignments', function() {
       var line = Parser.parseLine('$myVar = 4');
       expect(Parser.parseGroup(line, 0, 0)).to.eql([
@@ -275,6 +348,57 @@ describe('NML.Parser', function() {
             indirectObj: null,
             params: []
           }]
+        }
+      ]);
+    });
+
+    it('supports grouping in expressions', function() {
+      var line = Parser.parseLine('5 + 4 + (3 * 2)');
+      expect(Parser.parseGroup(line, 0, 0)).to.eql([
+        5, '+', 4, '+',
+        [3, '*', 2]
+      ]);
+    });
+
+    it('supports verbcalls in groups', function() {
+      var line = Parser.parseLine('5 + 4 + (3 * 2 + test())');
+      expect(Parser.parseGroup(line, 0, 0)).to.eql([
+        5, '+', 4, '+',
+        [ 3, '*', 2, '+',
+          {
+            type: 'verbcall',
+            verb: 'test',
+            directObj: null,
+            prepos: null,
+            indirectObj: null,
+            params: []
+          }
+        ]
+      ]);
+    });
+
+    it('is able to used grouped expressions in an assingment', function() {
+      var line = Parser.parseLine('$myVar = 5 + 4 + (3 * 2 + test())');
+      expect(Parser.parseGroup(line, 0, 0)).to.eql([
+        {
+          type: 'assign',
+          op: '=',
+          dst: {
+            type: 'var',
+            name: 'myVar'
+          },
+          src: [ 5, '+', 4, '+',
+                 [ 3, '*', 2, '+',
+                  {
+                    type: 'verbcall',
+                    verb: 'test',
+                    directObj: null,
+                    prepos: null,
+                    indirectObj: null,
+                    params: []
+                  }
+                 ]
+               ]
         }
       ]);
     });
