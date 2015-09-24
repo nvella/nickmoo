@@ -1,5 +1,6 @@
 var expect = require('chai').expect;
 var NML = require('../lib/nml');
+var async = require('async');
 
 describe('NML.VM', function() {
   describe('findIns', function() {
@@ -208,6 +209,17 @@ describe('NML.VM', function() {
       });
     });
 
+    it('can evaluate a complex mathematical expression containing many nested' +
+      'groups', function(done) {
+      var vm = new NML.VM();
+      var expr = NML.Parser.parseGroup(NML.Parser.parseLine('5 + 5 * 2 + 10 * (16 + 2 * (4 + 3))'));
+      vm.evalExpr(expr, function(err, value) {
+        expect(err).to.be.null;
+        expect(value).to.equal(315);
+        done();
+      });
+    });
+
     it('can evaluate a simple boolean expression', function(done) {
       var vm = new NML.VM();
       var expr = NML.Parser.parseGroup(NML.Parser.parseLine('10 == 10'));
@@ -300,6 +312,15 @@ describe('NML.VM', function() {
   });
 
   describe('#stepOnce', function() {
+    it('throws an error at the end of the script', function(done) {
+      var vm = new NML.VM();
+      vm.state.ast = NML.Parser.codeToAst('$myVar = 4');
+      vm.stepOnce(function(err) {
+        expect(err).to.be.an.instanceof(NML.Errors.EndOfScriptError);
+        done();
+      });
+    });
+
     it('can assign a local var', function(done) {
       var vm = new NML.VM();
       vm.state.ast = NML.Parser.codeToAst('$myVar = 4');
@@ -309,11 +330,112 @@ describe('NML.VM', function() {
       });
     });
 
-    it('throws an error at the end of the script', function(done) {
+    it('can assign a local var to an expression', function(done) {
       var vm = new NML.VM();
-      vm.state.ast = NML.Parser.codeToAst('$myVar = 4');
+      vm.state.ast = NML.Parser.codeToAst('$myVar = 5 + 5 * 2 + 10 * (16 + 2 * (4 + 3))');
+      vm.stepOnce(function(err) {
+        expect(vm.state.localVars.myVar).to.equal(315);
+        done();
+      });
+    });
+
+    it('can branch on an if statement evaluating to true', function(done) {
+      var vm = new NML.VM();
+      vm.state.ast = NML.Parser.codeToAst('if 5 == 5\nsay Hi\nend');
+      vm.stepOnce(function(err) {
+        expect(vm.state.ip).to.eql([0, 0]);
+        done();
+      });
+    });
+
+    it('can skip an if statement evaluating to false', function(done) {
+      var vm = new NML.VM();
+      vm.state.ast = NML.Parser.codeToAst('if 5 == 6\nsay Hi\nend\nsay Bye');
+      vm.stepOnce(function(err) {
+        expect(vm.state.ip).to.eql([1]);
+        done();
+      });
+    });
+
+    it('can return from an if statement at the end of the block',
+      function(done) {
+      var vm = new NML.VM();
+      vm.state.ast = NML.Parser.codeToAst('if 5 == 5\nsay Hi\nend\nsay Bye');
+      async.times(2, function(i, next) {
+        vm.stepOnce(next);
+      }, function(err) {
+        expect(err).to.be.null;
+        expect(vm.state.ip).to.eql([1]);
+        done();
+      });
+    });
+
+    it('can skip an if statement that evals to false at end the script',
+      function(done) {
+      var vm = new NML.VM();
+      vm.state.ast = NML.Parser.codeToAst('if 5 == 6\nsay Hi\nend');
       vm.stepOnce(function(err) {
         expect(err).to.be.an.instanceof(NML.Errors.EndOfScriptError);
+        expect(vm.state.ip).to.eql([0]);
+        done();
+      });
+    });
+
+    it('can error when returning from an if stmt placed at the end of script',
+      function(done) {
+      var vm = new NML.VM();
+      vm.state.ast = NML.Parser.codeToAst('if 5 == 5\nsay Hi\nend');
+      var lastIndex;
+      async.times(2, function(i, next) {
+        lastIndex = i;
+        vm.stepOnce(next);
+      }, function(err) {
+        expect(err).to.be.an.instanceof(NML.Errors.EndOfScriptError);
+        expect(vm.state.ip).to.eql([0]);
+        expect(lastIndex).to.equal(1);
+        done();
+      });
+    });
+
+    it('can complete an if stmt with a body of multiple lines',
+      function(done) {
+      var vm = new NML.VM();
+      vm.state.ast = NML.Parser.codeToAst('if 5 == 5\nsay Hi\nsay There\nend');
+      var lastIndex;
+      async.times(3, function(i, next) {
+        lastIndex = i;
+        vm.stepOnce(next);
+      }, function(err) {
+        expect(err).to.be.an.instanceof(NML.Errors.EndOfScriptError);
+        expect(vm.state.ip).to.eql([0]);
+        expect(lastIndex).to.equal(2);
+        done();
+      });
+    });
+
+    it('can enter a while loop when the condition provided is true',
+      function(done) {
+      var vm = new NML.VM();
+      vm.state.ast = NML.Parser.codeToAst('while 5 == 5\nsay Hi\nsay there\nend');
+      vm.stepOnce(function(err) {
+        expect(err).to.be.null;
+        expect(vm.state.ip).to.eql([0, 0]);
+        done();
+      });
+    });
+
+    it('can loop around in a while loop when condition provided is true',
+      function(done) {
+      var vm = new NML.VM();
+      vm.state.ast = NML.Parser.codeToAst('while 5 == 5\nsay Hi\nsay there\nend');
+      async.times(10, function(i, next) {
+        vm.stepOnce(function(err) {
+          expect(err).to.be.null; // err should always be null as we'll never exit the loop
+          next();
+        });
+      }, function(err) {
+        expect(err).to.be.null;
+        expect(vm.state.ip.length).to.be.above(1);
         done();
       });
     });
