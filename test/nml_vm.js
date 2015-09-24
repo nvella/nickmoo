@@ -174,6 +174,16 @@ describe('NML.VM', function() {
       });
     });
 
+    it('follows the order of operations', function(done) {
+      var vm = new NML.VM();
+      var expr = NML.Parser.parseGroup(NML.Parser.parseLine('5 + 5 * 2 + 10'));
+      vm.evalExpr(expr, function(err, value) {
+        expect(err).to.be.null;
+        expect(value).to.equal(25);
+        done();
+      });
+    });
+
     it('can evaluate a mathematical expression which references a local var',
       function(done) {
       var vm = new NML.VM();
