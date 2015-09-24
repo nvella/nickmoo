@@ -9,5 +9,13 @@ describe('MObject', function() {
       var mobj = new MObject();
       expect(mobj.id).to.be.an.instanceof(ObjectId);
     });
+
+    it('sets the creation time to within a second of the object being created',
+      function() {
+      var mobj = new MObject();
+      var now = new Date() / 1000;
+      expect(mobj.created).to.be.gte(now - 1);
+      expect(mobj.created).to.be.lte(now + 1);
+    });
   });
 });
