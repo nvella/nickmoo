@@ -2,6 +2,16 @@ var expect = require('chai').expect;
 var NML = require('../lib/nml');
 var async = require('async');
 
+LOOP_MAX = 10000;
+
+function times(i, func, callback) {
+  if(i <= 0) return callback(null);
+  func(function(err) {
+    if(err) return callback(err);
+    return times(i - 1, func, callback);
+  });
+}
+
 describe('NML.VM', function() {
   describe('findIns', function() {
     it('can find a top level instruction', function() {
@@ -32,10 +42,10 @@ describe('NML.VM', function() {
 
     it('can find an instruction nested in two blocks', function() {
       var ast = NML.Parser.codeToAst('$a = 2\nsay how are you\n' +
-        'if true\nsay test\nif false\nsay lol\nend\nend');
-      expect(NML.VM.findIns([2, 1, 0], ast).type).to.equal('verbcall');
-      expect(NML.VM.findIns([2, 1, 0], ast).verb).to.equal('say');
-      expect(NML.VM.findIns([2, 1, 0], ast).params).to.eql(['lol']);
+        'if true\nsay test\nif false\nsay lol\neat apple\nend\nend');
+      expect(NML.VM.findIns([2, 1, 1], ast).type).to.equal('verbcall');
+      expect(NML.VM.findIns([2, 1, 1], ast).verb).to.equal('eat');
+      expect(NML.VM.findIns([2, 1, 1], ast).params).to.eql(['apple']);
     });
   });
 
@@ -309,6 +319,48 @@ describe('NML.VM', function() {
         done();
       });
     });
+
+    it('can less-than two numbers to be true', function(done) {
+      var vm = new NML.VM();
+      var expr = NML.Parser.parseGroup(NML.Parser.parseLine('5 < 10'));
+      vm.evalExpr(expr, function(err, value) {
+        expect(err).to.be.null;
+        expect(value).to.be.true;
+        done();
+      });
+    });
+
+    it('can less-than two numbers to be false', function(done) {
+      var vm = new NML.VM();
+      var expr = NML.Parser.parseGroup(NML.Parser.parseLine('10 < 5'));
+      vm.evalExpr(expr, function(err, value) {
+        expect(err).to.be.null;
+        expect(value).to.be.false;
+        done();
+      });
+    });
+
+    it('can compare the value of a local var and a number to be true', function(done) {
+      var vm = new NML.VM();
+      var expr = NML.Parser.parseGroup(NML.Parser.parseLine('$myVar < 5'));
+      vm.state.localVars.myVar = 1;
+      vm.evalExpr(expr, function(err, value) {
+        expect(err).to.be.null;
+        expect(value).to.be.true;
+        done();
+      });
+    });
+
+    it('can compare the value of a local var and a number to be false', function(done) {
+      var vm = new NML.VM();
+      var expr = NML.Parser.parseGroup(NML.Parser.parseLine('$myVar < 5'));
+      vm.state.localVars.myVar = 10;
+      vm.evalExpr(expr, function(err, value) {
+        expect(err).to.be.null;
+        expect(value).to.be.false;
+        done();
+      });
+    });
   });
 
   describe('#stepOnce', function() {
@@ -335,6 +387,46 @@ describe('NML.VM', function() {
       vm.state.ast = NML.Parser.codeToAst('$myVar = 5 + 5 * 2 + 10 * (16 + 2 * (4 + 3))');
       vm.stepOnce(function(err) {
         expect(vm.state.localVars.myVar).to.equal(315);
+        done();
+      });
+    });
+
+    it('can process a += operator-assignment', function(done) {
+      var vm = new NML.VM();
+      vm.state.localVars.myVar = 5;
+      vm.state.ast = NML.Parser.codeToAst('$myVar += 5');
+      vm.stepOnce(function(err) {
+        expect(vm.state.localVars.myVar).to.equal(10);
+        done();
+      });
+    });
+
+    it('can process a -= operator-assignment', function(done) {
+      var vm = new NML.VM();
+      vm.state.localVars.myVar = 15;
+      vm.state.ast = NML.Parser.codeToAst('$myVar -= 5');
+      vm.stepOnce(function(err) {
+        expect(vm.state.localVars.myVar).to.equal(10);
+        done();
+      });
+    });
+
+    it('can process a *= operator-assignment', function(done) {
+      var vm = new NML.VM();
+      vm.state.localVars.myVar = 5;
+      vm.state.ast = NML.Parser.codeToAst('$myVar *= 5');
+      vm.stepOnce(function(err) {
+        expect(vm.state.localVars.myVar).to.equal(25);
+        done();
+      });
+    });
+
+    it('can process a /= operator-assignment', function(done) {
+      var vm = new NML.VM();
+      vm.state.localVars.myVar = 20;
+      vm.state.ast = NML.Parser.codeToAst('$myVar /= 5');
+      vm.stepOnce(function(err) {
+        expect(vm.state.localVars.myVar).to.equal(4);
         done();
       });
     });
@@ -436,6 +528,38 @@ describe('NML.VM', function() {
       }, function(err) {
         expect(err).to.be.null;
         expect(vm.state.ip.length).to.be.above(1);
+        done();
+      });
+    });
+
+    it('can exit from a while loop when the condition turns false',
+      function(done) {
+      var vm = new NML.VM();
+      vm.state.localVars.myVar = 5;
+      vm.state.ast = NML.Parser.codeToAst('while $myVar == 5\n$myVar = 4\nend');
+      async.times(10, function(i, next) {
+        vm.stepOnce(next);
+      }, function(err) {
+        expect(err).to.be.an.instanceof(NML.Errors.EndOfScriptError);
+        expect(vm.state.ip).to.eql([0]);
+        done();
+      });
+    });
+
+    it('can correctly process a nested loop structure',
+      function(done) {
+      var vm = new NML.VM();
+      vm.state.localVars.i = 0;
+      vm.state.localVars.j = 0;
+      vm.state.localVars.out = 0;
+      vm.state.ast = NML.Parser.codeToAst('while $i < 10\n$j = 0\nwhile $j < 5\n$j += 1\n$out += 1\nend\n$i += 1\nend');
+
+      times(LOOP_MAX, vm.stepOnce.bind(vm), function(err) {
+        expect(err).to.be.an.instanceof(NML.Errors.EndOfScriptError);
+        expect(vm.state.ip).to.eql([0]);
+        expect(vm.state.localVars.i).to.equal(10);
+        expect(vm.state.localVars.j).to.equal(5);
+        expect(vm.state.localVars.out).to.equal(50);
         done();
       });
     });
