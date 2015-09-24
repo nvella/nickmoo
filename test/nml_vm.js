@@ -4,6 +4,9 @@ var async = require('async');
 
 LOOP_MAX = 10000;
 
+// Why is this here? I have no clue. It seems that the async library dislikes
+// my VM with nested loops. Maybe too many stack levels? It works for all the
+// other tests... I think...
 function times(i, func, callback) {
   if(i <= 0) return callback(null);
   func(function(err) {
