@@ -599,4 +599,17 @@ describe('NML.VM', function() {
       });
     });
   });
+
+  describe('#step', function() {
+    it('can loop the correct amount of times', function(done) {
+      var vm = new NML.VM();
+      vm.state.localVars.i = 0;
+      vm.state.ast = NML.Parser.codeToAst('$i += 1\n$i += 1\n$i += 1\n$i += 1\n$i += 1\n$i += 1\n$i += 1\n$i += 1\n$i += 1\n$i += 1\n$i += 1\n');
+      vm.step(10, function(err) {
+        expect(err).to.be.null;
+        expect(vm.state.localVars.i).to.equal(10);
+        done();
+      });
+    });
+  });
 });
