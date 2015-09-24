@@ -394,6 +394,38 @@ describe('NML.VM', function() {
       });
     });
 
+    it('can assign an object property', function(done) {
+      var vm = new NML.VM();
+      vm.state.ast = NML.Parser.codeToAst('%myProp = 254');
+      vm.mobj = {
+        setProp: function(prop, value, callback) {
+          expect(prop).to.equal('myProp');
+          expect(value).to.equal(254);
+          callback(null);
+        }
+      };
+      vm.stepOnce(function(err) {
+        expect(err).to.be.an.instanceof(NML.Errors.EndOfScriptError);
+        done();
+      });
+    });
+
+    it('can assign an object property to an expression', function(done) {
+      var vm = new NML.VM();
+      vm.state.ast = NML.Parser.codeToAst('%myProp = 5 + 5 * 2 + 10 * (16 + 2 * (4 + 3))');
+      vm.mobj = {
+        setProp: function(prop, value, callback) {
+          expect(prop).to.equal('myProp');
+          expect(value).to.equal(315);
+          callback(null);
+        }
+      };
+      vm.stepOnce(function(err) {
+        expect(err).to.be.an.instanceof(NML.Errors.EndOfScriptError);
+        done();
+      });
+    });
+
     it('can process a += operator-assignment', function(done) {
       var vm = new NML.VM();
       vm.state.localVars.myVar = 5;
