@@ -75,4 +75,41 @@ describe('Connection', function() {
       expect(sock.destroyed).to.be.true;
     });
   });
+
+  describe('#print', function() {
+    it('prints a line to the sock', function() {
+      var app = new App();
+      var sock = new FakeSock();
+      var conn = new Connection(app, sock);
+      app.connections.push(conn);
+      conn.init();
+      conn.print('Hello world');
+      conn.deinit();
+      expect(sock.str).to.be.equal('Hello world');
+    });
+
+    it('converts LF newlines to CRLF', function() {
+      var app = new App();
+      var sock = new FakeSock();
+      var conn = new Connection(app, sock);
+      app.connections.push(conn);
+      conn.init();
+      conn.print('Hello\nworld\n');
+      conn.deinit();
+      expect(sock.str).to.be.equal('Hello\r\nworld\r\n');
+    });
+  });
+
+  describe('#puts', function() {
+    it('appends a newline to output', function() {
+      var app = new App();
+      var sock = new FakeSock();
+      var conn = new Connection(app, sock);
+      app.connections.push(conn);
+      conn.init();
+      conn.puts('Hello');
+      conn.deinit();
+      expect(sock.str).to.be.equal('Hello\r\n');
+    });
+  });
 });
