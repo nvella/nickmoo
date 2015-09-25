@@ -19,7 +19,7 @@ FakeMongoCollection.prototype.updateOne = function(queryDoc, doc, options, callb
 };
 
 describe('MObject', function() {
-  describe('new', function() {
+  describe('constructor', function() {
     it('creates a new object id for itself when one isn\'t provided',
       function() {
       var mobj = new MObject();
