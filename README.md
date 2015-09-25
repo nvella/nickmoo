@@ -9,11 +9,11 @@ NickMOO is built with NodeJS and MongoDB.
 - [x] TCP server
 - [x] Connection management
 - [x] Welcome message
-- [ ] NML
+- [x] NML
  - [x] Script Parser (mostly complete)
- - [ ] VM (development started)
-- [ ] Objects
- - [ ] Javascript->DB mapping
+ - [x] VM (mostly complete, verbcalls currently not implemented but will be when MObject is complete)
+- [ ] Objects (MObject)
+ - [ ] Javascript->DB mapping (in progress)
 - [ ] Player handling
 
 *to be expanded*
@@ -35,4 +35,4 @@ Documentation for NML is in the works.
 
 ## Contributing
 
-Pull requests are welcome, currently I'm working on the NML VM. Please write tests (using mocha and chai) for any features you introduce. Better contribution documentation is coming soon...
+Pull requests are welcome, currently I'm working on the connection handler (lib/connection.js). Please write tests (using mocha and chai) for any features you introduce. Better contribution documentation is coming soon...
