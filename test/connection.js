@@ -112,4 +112,25 @@ describe('Connection', function() {
       expect(sock.str).to.be.equal('Hello\r\n');
     });
   });
+
+  describe('#gets', function() {
+    it('can read a line of text from the sock', function(done) {
+      var app = new App();
+      var sock = new FakeSock();
+      var conn = new Connection(app, sock);
+      app.connections.push(conn);
+      conn.init();
+      process.nextTick(function() {
+        if(sock.evs.data === undefined) conn.deinit();
+        expect(sock.evs.data).to.not.be.undefined;        
+        sock.evs.data(new Buffer('Hello world\r\n'));
+      });
+      conn.gets(function(err, str) {
+        expect(err).to.be.null;
+        expect(str).to.equal('Hello world\r\n');
+        conn.deinit();
+        done();
+      });
+    });
+  });
 });
