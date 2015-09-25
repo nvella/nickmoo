@@ -1,8 +1,19 @@
-Welcome to NickMOO.
+         _      _
+   _ __ (_) ___| | ___ __ ___   ___   ___
+  | '_ \| |/ __| |/ / '_ ` _ \ / _ \ / _ \   {SERVER_NAME}
+  | | | | | (__|   <| | | | | | (_) | (_) |  running {NAME} version {VERSION}
+  |_| |_|_|\___|_|\_\_| |_| |_|\___/ \___/
 
- NickMOO is an online text game (think text adventure) that is able to be
-reprogrammed _while_ you are playing it. And it's also object oriented. Hah!
-To be honest, this is not a new concept. This has existed in many forms before,
-most notably LambdaMOO which has been in existence since the early 1990s. How is
-NickMOO different? Well, it's mostly not. NickMOO is essentially my
-interpretation and implementation of the engine and system.
+ += WHAT? =====================================+= GET STARTED ==============-+
+ |                                             |                             |
+ |   NickMOO is an online, multiplayer,        |  Type                       |
+ |  reprogrammable and user content driven     |   guest                     |
+ |  text game, historically known as a MOO.    |           to play as guest  |
+ |   Most of the world is created by the       |   connect <user> <pw>       |
+ |  players themselves, with new areas and     |                   to login  |
+ |  objects being created in the game every    |   new                       |
+ |  day.                                       |       to create a new user  |
+ |   For more info, join as a guest and        |              on the system  |
+ |  'ask the Guide for help'                   |                             |
+ |                                             |                             |
+ +---------------------------------------------+-----------------------------+
