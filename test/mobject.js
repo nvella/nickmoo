@@ -82,5 +82,16 @@ describe('MObject', function() {
         done();
       });
     });
+
+    it('can load the creation time', function(done) {
+      var mobj = new MObject(app);
+      app.collections.objects.spec[0]._id = mobj.id;
+
+      mobj.load(function(err) {
+        expect(err).to.be.null;
+        expect(mobj.created).to.equal(12345);
+        done();
+      });
+    });
   });
 });
