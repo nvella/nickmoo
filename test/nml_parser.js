@@ -44,11 +44,6 @@ describe('NML.Parser', function() {
         eql(['the', 'quick', 'brown', new ObjectId('012345678901234567890123')]);
     });
 
-    it('handles object id aliases', function() {
-      expect(Parser.parseLine('the quick ##root')).to.eql(['the', 'quick',
-        {type: 'objectIdAlias', value: 'root'}]);
-    });
-
     it('handles arrays', function() {
       expect(Parser.parseLine('hey [1 2 3 4] there')).to.eql(['hey',
         {type: 'array', ctx: [1, 2, 3, 4]}, 'there']);
