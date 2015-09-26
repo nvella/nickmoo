@@ -154,5 +154,22 @@ describe('Connection', function() {
         done();
       });
     });
+
+    it('can remove itself from the data event listeners on deinit',
+    function(done) {
+      var app = new App();
+      var sock = new FakeSock();
+      var conn = new Connection(app, sock);
+      app.connections.push(conn);
+      conn.init();
+      process.nextTick(function() {
+        conn.deinit();
+        expect(sock.evs.data).to.be.undefined;
+        done();
+      });
+      conn.gets(function(err, str) {
+        throw 'this should\'nt be called';
+      });
+    });
   });
 });
