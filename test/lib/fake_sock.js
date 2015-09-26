@@ -4,5 +4,6 @@ FakeSock.prototype.write   = function(str) {this.str = str;};
 FakeSock.prototype.on      = function(ev, func) {this.evs[ev] = func;};
 FakeSock.prototype.end     = function() {this.ended = true;};
 FakeSock.prototype.destroy = function() {this.destroyed = true;};
+FakeSock.prototype.removeListener = function(ev) {delete this.evs[ev];};
 
 module.exports = FakeSock;
