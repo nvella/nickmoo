@@ -109,6 +109,17 @@ describe('Connection', function() {
       conn.deinit();
       expect(sock.str).to.be.equal('Hey\r\n\r\n\r\n\r\nthere');
     });
+
+    it('doesn\'t modify CRLF', function() {
+      var app = new App();
+      var sock = new FakeSock();
+      var conn = new Connection(app, sock);
+      app.connections.push(conn);
+      conn.init();
+      conn.print('Hey\r\nthere\r\n');
+      conn.deinit();
+      expect(sock.str).to.be.equal('Hey\r\nthere\r\n');
+    });
   });
 
   describe('#puts', function() {
