@@ -98,6 +98,17 @@ describe('Connection', function() {
       conn.deinit();
       expect(sock.str).to.be.equal('Hello\r\nworld\r\n');
     });
+
+    it('can convert mulitple successive LF into CRLF', function() {
+      var app = new App();
+      var sock = new FakeSock();
+      var conn = new Connection(app, sock);
+      app.connections.push(conn);
+      conn.init();
+      conn.print('Hey\n\n\n\nthere');
+      conn.deinit();
+      expect(sock.str).to.be.equal('Hey\r\n\r\n\r\n\r\nthere');
+    });
   });
 
   describe('#puts', function() {
@@ -122,7 +133,7 @@ describe('Connection', function() {
       conn.init();
       process.nextTick(function() {
         if(sock.evs.data === undefined) conn.deinit();
-        expect(sock.evs.data).to.not.be.undefined;        
+        expect(sock.evs.data).to.not.be.undefined;
         sock.evs.data(new Buffer('Hello world\r\n'));
       });
       conn.gets(function(err, str) {
