@@ -167,6 +167,26 @@ describe('Connection', function() {
       });
     });
 
+    it('can read a line of text split over two packets', function(done) {
+      var app = new App();
+      var sock = new FakeSock();
+      var conn = new Connection(app, sock);
+      app.connections.push(conn);
+      conn.init();
+      process.nextTick(function() {
+        if(sock.evs.data === undefined) conn.deinit();
+        expect(sock.evs.data).to.not.be.undefined;
+        sock.evs.data(new Buffer('Hello world '));
+        sock.evs.data(new Buffer('over two packets\r\n'));
+      });
+      conn.gets(function(err, str) {
+        expect(err).to.be.null;
+        expect(str).to.equal('Hello world over two packets\r\n');
+        conn.deinit();
+        done();
+      });
+    });
+
     it('can remove itself from the data event listeners on deinit',
     function(done) {
       var app = new App();
