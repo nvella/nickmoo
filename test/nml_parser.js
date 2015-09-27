@@ -57,6 +57,15 @@ describe('NML.Parser', function() {
         {type: 'prop', name: 'myProp', ctx: [32]}, 'there']);
     });
 
+    it('handles backslashes to escape components', function() {
+      expect(Parser.parseLine('this is a \\$test')).to.eql([
+        'this',
+        'is',
+        'a',
+        '$test'
+      ]);
+    });
+
     it('groups components in parens', function() {
       expect(Parser.parseLine('this is (a very nice test) 1 2')).to.eql([
         'this',
