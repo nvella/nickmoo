@@ -16,7 +16,8 @@
   },
   "devDependencies": {
     "chai": "*",
-    "mocha": "*",
-    "istanbul": "*"
+    "coveralls": "^2.11.4",
+    "istanbul": "*",
+    "mocha": "*"
   }
 }
