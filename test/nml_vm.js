@@ -343,6 +343,66 @@ describe('NML.VM', function() {
       });
     });
 
+    it('can greater-than two numbers to be true', function(done) {
+      var vm = new NML.VM();
+      var expr = NML.Parser.parseGroup(NML.Parser.parseLine('10 > 5'));
+      vm.evalExpr(expr, function(err, value) {
+        expect(err).to.be.null;
+        expect(value).to.be.true;
+        done();
+      });
+    });
+
+    it('can greater-than two numbers to be false', function(done) {
+      var vm = new NML.VM();
+      var expr = NML.Parser.parseGroup(NML.Parser.parseLine('5 > 10'));
+      vm.evalExpr(expr, function(err, value) {
+        expect(err).to.be.null;
+        expect(value).to.be.false;
+        done();
+      });
+    });
+
+    it('can less-eql-than two numbers to be true', function(done) {
+      var vm = new NML.VM();
+      var expr = NML.Parser.parseGroup(NML.Parser.parseLine('10 <= 10'));
+      vm.evalExpr(expr, function(err, value) {
+        expect(err).to.be.null;
+        expect(value).to.be.true;
+        done();
+      });
+    });
+
+    it('can less-eql-than two numbers to be false', function(done) {
+      var vm = new NML.VM();
+      var expr = NML.Parser.parseGroup(NML.Parser.parseLine('6 <= 5'));
+      vm.evalExpr(expr, function(err, value) {
+        expect(err).to.be.null;
+        expect(value).to.be.false;
+        done();
+      });
+    });
+
+    it('can greater-eql-than two numbers to be true', function(done) {
+      var vm = new NML.VM();
+      var expr = NML.Parser.parseGroup(NML.Parser.parseLine('5 >= 5'));
+      vm.evalExpr(expr, function(err, value) {
+        expect(err).to.be.null;
+        expect(value).to.be.true;
+        done();
+      });
+    });
+
+    it('can greater-eql-than two numbers to be false', function(done) {
+      var vm = new NML.VM();
+      var expr = NML.Parser.parseGroup(NML.Parser.parseLine('4 >= 5'));
+      vm.evalExpr(expr, function(err, value) {
+        expect(err).to.be.null;
+        expect(value).to.be.false;
+        done();
+      });
+    });
+
     it('can compare the value of a local var and a number to be true', function(done) {
       var vm = new NML.VM();
       var expr = NML.Parser.parseGroup(NML.Parser.parseLine('$myVar < 5'));
