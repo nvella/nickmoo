@@ -1,9 +1,7 @@
 var expect = require('chai').expect;
 var Connection = require('../lib/connection');
 var FakeSock = require('./lib/fake_sock');
-
-function App() {this.connections = []; this.messages = {welcome:''};}
-App.prototype.log = function() {};
+var App = require('./lib/fake_app');
 
 describe('Connection', function() {
   describe('constructor', function() {
