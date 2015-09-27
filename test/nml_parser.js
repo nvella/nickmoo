@@ -44,6 +44,12 @@ describe('NML.Parser', function() {
         eql(['the', 'quick', 'brown', new ObjectId('012345678901234567890123')]);
     });
 
+    it('handles object ids at the end of an array', function() {
+      expect(Parser.parseLine('test [#012345678901234567890123] 1234')).to.
+        eql(['test', {type: 'array', ctx:
+            [new ObjectId('012345678901234567890123')]}, 1234]);
+    });
+
     it('handles arrays', function() {
       expect(Parser.parseLine('hey [1 2 3 4] there')).to.eql(['hey',
         {type: 'array', ctx: [1, 2, 3, 4]}, 'there']);
