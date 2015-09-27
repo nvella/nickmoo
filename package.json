@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "node_modules/.bin/mocha"
+    "test": "node_modules/.bin/mocha",
+    "coverage": "node_modules/.bin/istanbul cover _mocha -- -R spec && open coverage/lcov-report/index.html"
   },
   "author": "nvella",
   "license": "MIT",
@@ -15,6 +16,7 @@
   },
   "devDependencies": {
     "chai": "*",
-    "mocha": "*"
+    "mocha": "*",
+    "istanbul": "*"
   }
 }
