@@ -66,6 +66,16 @@ describe('NML.Parser', function() {
         2
       ]);
     });
+
+    it('handles null', function() {
+      expect(Parser.parseLine('this is a null test')).to.eql([
+        'this',
+        'is',
+        'a',
+        {type: 'null', value: null},
+        'test'
+      ]);
+    });
   });
 
   describe('prepositionsFromParsedLine', function() {
