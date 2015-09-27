@@ -42,6 +42,18 @@ describe('Connection', function() {
       expect(sock.evs.error).to.be.a('function');
       conn.deinit();
     });
+
+    it('sends a timeout check on the defined interval', function(done) {
+      var sock = new FakeSock();
+      var conn = new Connection(new App(), sock);
+      conn.timeoutWait = 10; // Bump down the time for the test
+      conn.init();
+      setTimeout(function() {
+        expect(sock.str).to.equal('\0');
+        conn.deinit();
+        done();
+      }, 11);
+    });
   });
 
   describe('#deinit', function() {
