@@ -67,6 +67,13 @@ describe('NML.Parser', function() {
       ]);
     });
 
+    it('ignores commas after components', function() {
+      expect(Parser.parseLine("this('is', 'a', 'test')")).to.eql([
+        'this',
+        {type: 'group', ctx: ['is', 'a', 'test']}
+      ]);
+    });
+
     it('handles null', function() {
       expect(Parser.parseLine('this is a null test')).to.eql([
         'this',
