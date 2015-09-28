@@ -94,4 +94,82 @@ describe('MObject', function() {
       });
     });
   });
+
+  describe('#getProp', function() {
+    var app = {
+      collections: {
+        objects: new FakeMongoCollection(
+          [{
+            _verbs: {
+              _step: '$a = 1'
+            },
+            _created: 12345,
+            ayy: 'lmao'
+          }]
+        )
+      }
+    };
+
+    it('can retrieve an object property', function(done) {
+      var mobj = new MObject(app);
+      app.collections.objects.spec[0]._id = mobj.id;
+
+      mobj.load(function(err) {
+        expect(err).to.be.null;
+        expect(mobj.getProp('ayy')).to.equal('lmao');
+        done();
+      });
+    });
+
+    it('returns NML null on any property prefixed with an _', function(done) {
+      var mobj = new MObject(app);
+      app.collections.objects.spec[0]._id = mobj.id;
+
+      mobj.load(function(err) {
+        expect(err).to.be.null;
+        expect(mobj.getProp('_created')).to.eql({type: 'null', value: null});
+        done();
+      });
+    });
+  });
+
+  describe('#setProp', function() {
+    var app = {
+      collections: {
+        objects: new FakeMongoCollection(
+          [{
+            _verbs: {
+              _step: '$a = 1'
+            },
+            _created: 12345,
+            ayy: 'lmao'
+          }]
+        )
+      }
+    };
+
+    it('can set an object property', function(done) {
+      var mobj = new MObject(app);
+      app.collections.objects.spec[0]._id = mobj.id;
+
+      mobj.load(function(err) {
+        expect(err).to.be.null;
+        mobj.setProp('ayy', 'memes');
+        expect(mobj.getProp('ayy')).to.equal('memes');
+        done();
+      });
+    });
+
+    it('doesn\'t set props prefixed with _', function(done) {
+      var mobj = new MObject(app);
+      app.collections.objects.spec[0]._id = mobj.id;
+
+      mobj.load(function(err) {
+        expect(err).to.be.null;
+        mobj.setProp('_test', 'test');
+        expect(mobj.props._test).to.be.undefined;
+        done();
+      });
+    });
+  });
 });
