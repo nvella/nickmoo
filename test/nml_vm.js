@@ -486,6 +486,36 @@ describe('NML.VM', function() {
       });
     });
 
+    it('can assign an array element of a local var', function(done) {
+      var vm = new NML.VM();
+      vm.state.localVars.myVar = {type: 'array', ctx: [1, 2, 3, 4]};
+      vm.state.ast = NML.Parser.codeToAst('$myVar[1] = 99');
+      vm.stepOnce(function(err) {
+        expect(vm.state.localVars.myVar.ctx[1]).to.equal(99);
+        done();
+      });
+    });
+
+    it('can assign an array element of an object prop', function(done) {
+      var vm = new NML.VM();
+      vm.state.ast = NML.Parser.codeToAst('%myProp[1] = 99');
+      vm.mobj = {
+        setProp: function(prop, value, callback) {
+          expect(prop).to.equal('myProp');
+          expect(value).to.eql({type: 'array', ctx: [1, 99, 3, 4]});
+          callback(null);
+        },
+
+        getProp: function(prop, callback) {
+          expect(prop).to.equal('myProp');
+          callback(null, {type: 'array', ctx: [1, 2, 3, 4]});
+        }
+      };
+      vm.stepOnce(function(err) {
+        done();
+      });
+    });
+
     it('can process a += operator-assignment', function(done) {
       var vm = new NML.VM();
       vm.state.localVars.myVar = 5;
