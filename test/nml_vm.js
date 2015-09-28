@@ -100,10 +100,9 @@ describe('NML.VM', function() {
     });
 
     it('resolves an object property', function(done) {
-      var mobj = { getProp: function(name, callback) {
+      var mobj = { getProp: function(name) {
         expect(name).to.equal('myProp');
-        expect(callback).to.not.be.null;
-        callback(null, 42);
+        return 42;
       }};
       var vm = new NML.VM(undefined, mobj);
 
@@ -125,10 +124,9 @@ describe('NML.VM', function() {
     });
 
     it('resolves an array element on an object property', function(done) {
-      var mobj = { getProp: function(name, callback) {
+      var mobj = { getProp: function(name) {
         expect(name).to.equal('myProp');
-        expect(callback).to.not.be.null;
-        callback(null, {type: 'array', ctx: ['apple', 'banana']});
+        return {type: 'array', ctx: ['apple', 'banana']};
       }};
       var vm = new NML.VM(undefined, mobj);
 
@@ -152,10 +150,9 @@ describe('NML.VM', function() {
 
     it('throws an error when trying to index a nonindexable object prop',
       function(done) {
-      var mobj = { getProp: function(name, callback) {
+      var mobj = { getProp: function(name) {
         expect(name).to.equal('myProp');
-        expect(callback).to.not.be.null;
-        callback(null, 'banana');
+        return 'banana';
       }};
       var vm = new NML.VM(undefined, mobj);
 
@@ -458,10 +455,9 @@ describe('NML.VM', function() {
       var vm = new NML.VM();
       vm.state.ast = NML.Parser.codeToAst('%myProp = 254');
       vm.mobj = {
-        setProp: function(prop, value, callback) {
+        setProp: function(prop, value) {
           expect(prop).to.equal('myProp');
           expect(value).to.equal(254);
-          callback(null);
         }
       };
       vm.stepOnce(function(err) {
@@ -474,10 +470,9 @@ describe('NML.VM', function() {
       var vm = new NML.VM();
       vm.state.ast = NML.Parser.codeToAst('%myProp = 5 + 5 * 2 + 10 * (16 + 2 * (4 + 3))');
       vm.mobj = {
-        setProp: function(prop, value, callback) {
+        setProp: function(prop, value) {
           expect(prop).to.equal('myProp');
           expect(value).to.equal(315);
-          callback(null);
         }
       };
       vm.stepOnce(function(err) {
@@ -500,15 +495,14 @@ describe('NML.VM', function() {
       var vm = new NML.VM();
       vm.state.ast = NML.Parser.codeToAst('%myProp[1] = 99');
       vm.mobj = {
-        setProp: function(prop, value, callback) {
+        setProp: function(prop, value) {
           expect(prop).to.equal('myProp');
           expect(value).to.eql({type: 'array', ctx: [1, 99, 3, 4]});
-          callback(null);
         },
 
-        getProp: function(prop, callback) {
+        getProp: function(prop) {
           expect(prop).to.equal('myProp');
-          callback(null, {type: 'array', ctx: [1, 2, 3, 4]});
+          return {type: 'array', ctx: [1, 2, 3, 4]};
         }
       };
       vm.stepOnce(function(err) {
