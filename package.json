@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "node_modules/.bin/mocha",
+    "test-local": "mongod --dbpath $(pwd)/db --fork --logpath $(pwd)/db-logs/mongod.log --pidfilepath $(pwd)/mongod.pid ; node_modules/.bin/mocha ; kill $(cat mongod.pid) ; rm mongod.pid",
     "coverage": "node_modules/.bin/istanbul cover _mocha -- -R spec && open coverage/lcov-report/index.html"
   },
   "author": "nvella",
