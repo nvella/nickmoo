@@ -114,6 +114,17 @@ describe('MObject', function() {
       var mobj = new MObject(app);
       app.collections.objects.spec[0]._id = mobj.id;
 
+      mobj.setProp('_verbs', 'ayy', function(err) {
+        expect(err).to.be.null;
+        expect(app.collections.objects.spec[0]._verbs).to.be.a('object');
+        done();
+      });
+    });
+
+    it('doesn\'t set read-only props', function(done) {
+      var mobj = new MObject(app);
+      app.collections.objects.spec[0]._id = mobj.id;
+
       mobj.setProp('_created', 'ayy', function(err) {
         expect(err).to.be.null;
         expect(app.collections.objects.spec[0]._created).to.equal(12345);
