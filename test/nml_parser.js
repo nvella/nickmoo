@@ -98,6 +98,11 @@ describe('NML.Parser', function() {
         'test'
       ]);
     });
+
+    it('throws an error on attempt to close a non-array', function() {
+      expect(function(){Parser.parseLine('(test]', 1);}).to.throw(Error,
+        'line 1: last opened context in line was not an array or array index specifier');
+    });
   });
 
   describe('prepositionsFromParsedLine', function() {
