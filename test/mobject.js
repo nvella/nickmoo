@@ -88,9 +88,9 @@ describe('MObject', function() {
       var mobj = new MObject(app);
       app.collections.objects.spec[0]._id = mobj.id;
 
-      mobj.getProp('_verbs', function(err, value) {
+      mobj.getProp('_created', function(err, value) {
         expect(err).to.be.null;
-        expect(value).to.eql({type: 'null', value: null});
+        expect(value).to.eql(12345);
         done();
       });
     });
