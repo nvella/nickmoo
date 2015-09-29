@@ -1,6 +1,7 @@
 var expect = require('chai').expect;
 var MObject = require('../lib/mobject');
 var NML = require('../lib/nml');
+var NMLSyntaxError = NML.Errors.NMLSyntaxError;
 var ObjectId = require('mongodb').ObjectId;
 
 function FakeMongoCollection(spec) {
@@ -91,7 +92,8 @@ describe('MObject', function() {
         objects: new FakeMongoCollection(
           [{
             _verbs: {
-              _step: '$a = 1'
+              _step: '$a = 1',
+              badSyntax: 'if\n$a = 1\nend'
             },
             _created: 12345,
             ayy: 'lmao'
@@ -123,6 +125,18 @@ describe('MObject', function() {
         done();
       });
     });
+
+    it('returns an error on parser syntax error', function(done) {
+      var mobj = new MObject(app);
+      app.collections.objects.spec[0]._id = mobj.id;
+
+      mobj.vmFromVerb('badSyntax', function(err, vm) {
+        expect(err).to.be.an.instanceof(NMLSyntaxError);
+        expect(err.message).to.equal('line 1: if usage: if <expr>');
+        expect(vm).to.be.undefined;
+        done();
+      });
+    })
   });
 
   describe('#getProp', function() {
