@@ -86,6 +86,35 @@ describe('MObject', function() {
     });
   });
 
+  describe('#getVerbs', function() {
+    var app = {
+      collections: {
+        objects: new FakeMongoCollection(
+          [{
+            _verbs: {
+              _step: '$a = 1',
+              put: '$a = 2'
+            },
+            _created: 12345,
+            ayy: 'lmao'
+          }]
+        )
+      }
+    };
+
+    it('can return a list of verbs', function(done) {
+      var mobj = new MObject(app);
+      app.collections.objects.spec[0]._id = mobj.id;
+
+      mobj.getVerbs(function(err, verbs) {
+        expect(err).to.be.null;
+        expect(verbs).to.be.an('array');
+        expect(verbs).to.eql(['_step', 'put']);
+        done();
+      });
+    });
+  });
+
   describe('#vmFromVerb', function() {
     var app = {
       collections: {
