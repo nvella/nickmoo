@@ -46,6 +46,45 @@ describe('MObject', function() {
     });
   });
 
+  describe('#getVerb', function() {
+    var app = {
+      collections: {
+        objects: new FakeMongoCollection(
+          [{
+            _verbs: {
+              _step: '$a = 1',
+            },
+            _created: 12345,
+            ayy: 'lmao'
+          }]
+        )
+      }
+    };
+
+    it('can retreive verb source from the db', function(done) {
+      var mobj = new MObject(app);
+      app.collections.objects.spec[0]._id = mobj.id;
+
+      mobj.getVerb('_step', function(err, src) {
+        expect(err).to.be.null;
+        expect(src).to.be.equal('$a = 1');
+        done();
+      });
+    });
+
+    it('returns an error when the verb doesn\'t exist', function(done) {
+      var mobj = new MObject(app);
+      app.collections.objects.spec[0]._id = mobj.id;
+
+      mobj.getVerb('_blah', function(err, src) {
+        expect(err).to.be.an.instanceof(Error);
+        expect(err.message).to.equal('verb does not exist');
+        expect(src).to.be.undefined;
+        done();
+      });
+    });
+  });
+
   describe('#vmFromVerb', function() {
     var app = {
       collections: {
