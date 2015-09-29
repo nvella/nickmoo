@@ -66,9 +66,9 @@ describe('MObject', function() {
       var mobj = new MObject(app);
       app.collections.objects.spec[0]._id = mobj.id;
 
-      mobj.load(function(err) {
+      mobj.getProp('ayy', function(err, value) {
         expect(err).to.be.null;
-        expect(mobj.getProp('ayy')).to.equal('lmao');
+        expect(value).to.equal('lmao');
         done();
       });
     });
@@ -77,9 +77,20 @@ describe('MObject', function() {
       var mobj = new MObject(app);
       app.collections.objects.spec[0]._id = mobj.id;
 
-      mobj.load(function(err) {
+      mobj.getProp('_verbs', function(err, value) {
         expect(err).to.be.null;
-        expect(mobj.getProp('_verbs')).to.eql({type: 'null', value: null});
+        expect(value).to.eql({type: 'null', value: null});
+        done();
+      });
+    });
+
+    it('can retrieve a read-only property', function(done) {
+      var mobj = new MObject(app);
+      app.collections.objects.spec[0]._id = mobj.id;
+
+      mobj.getProp('_verbs', function(err, value) {
+        expect(err).to.be.null;
+        expect(value).to.eql({type: 'null', value: null});
         done();
       });
     });
@@ -103,9 +114,9 @@ describe('MObject', function() {
       var mobj = new MObject(app);
       app.collections.objects.spec[0]._id = mobj.id;
 
-      mobj.setProp('ayy', 'memes', function(err) {
+      mobj.setProp('test', '1234', function(err) {
         expect(err).to.be.null;
-        expect(app.collections.objects.spec[0].ayy).to.equal('memes');
+        expect(app.collections.objects.spec[0].test).to.equal('1234');
         done();
       });
     });
