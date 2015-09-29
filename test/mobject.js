@@ -1,5 +1,6 @@
 var expect = require('chai').expect;
 var MObject = require('../lib/mobject');
+var NML = require('../lib/nml');
 var ObjectId = require('mongodb').ObjectId;
 
 function FakeMongoCollection(spec) {
@@ -45,7 +46,45 @@ describe('MObject', function() {
     });
   });
 
+  describe('#vmFromVerb', function() {
+    var app = {
+      collections: {
+        objects: new FakeMongoCollection(
+          [{
+            _verbs: {
+              _step: '$a = 1'
+            },
+            _created: 12345,
+            ayy: 'lmao'
+          }]
+        )
+      }
+    };
 
+    it('can create a VM with the provided verb\'s source', function(done) {
+      var mobj = new MObject(app);
+      app.collections.objects.spec[0]._id = mobj.id;
+
+      mobj.vmFromVerb('_step', function(err, vm) {
+        expect(err).to.be.null;
+        expect(vm).to.be.an.instanceof(NML.VM);
+        expect(vm.state.ast).to.eql([{type: 'assign', op: '=', src: [1], dst: {type: 'var', name: 'a'}}]);
+        done();
+      });
+    });
+
+    it('returns an error when the verb doesn\'t exist', function(done) {
+      var mobj = new MObject(app);
+      app.collections.objects.spec[0]._id = mobj.id;
+
+      mobj.vmFromVerb('_blah', function(err, vm) {
+        expect(err).to.be.an.instanceof(Error);
+        expect(err.message).to.equal('verb does not exist');
+        expect(vm).to.be.undefined;
+        done();
+      });
+    });
+  });
 
   describe('#getProp', function() {
     var app = {
