@@ -17,8 +17,10 @@ FakeMongoCollection.prototype.findOne = function(queryDoc, callback) {
 };
 
 FakeMongoCollection.prototype.updateOne = function(queryDoc, doc, options, callback) {
+  if(doc['$set'] === undefined) throw 'FakeMongoCollection#updateOne does not yet support replacing documents';
   var cb = callback || options;
   var ops = typeof(options) === 'object' ? options : {};
+  doc = doc['$set']; // Update operation
   for(var obj of this.spec) {
     if(obj._id == queryDoc._id) {
       for(var prop in doc) { obj[prop] = doc[prop]; }
@@ -110,6 +112,46 @@ describe('MObject', function() {
         expect(err).to.be.null;
         expect(verbs).to.be.an('array');
         expect(verbs).to.eql(['_step', 'put']);
+        done();
+      });
+    });
+  });
+
+  describe('#setVerb', function() {
+    var app = {
+      collections: {
+        objects: new FakeMongoCollection(
+          [{
+            _verbs: {
+              _step: '$a = 1',
+            },
+            _created: 12345,
+            ayy: 'lmao'
+          }]
+        )
+      }
+    };
+
+    it('can set a verb\'s source', function(done) {
+      var mobj = new MObject(app);
+      app.collections.objects.spec[0]._id = mobj.id;
+      app.collections.objects.spec[0]._verbs._step = '$a = 1';
+
+      mobj.setVerb('_step', '$a = 4', function(err) {
+        expect(err).to.be.null;
+        expect(app.collections.objects.spec[0]._verbs._step).to.equal('$a = 4');
+        done();
+      });
+    });
+
+    it('returns an error when trying to set bad syntax', function(done) {
+      var mobj = new MObject(app);
+      app.collections.objects.spec[0]._id = mobj.id;
+      app.collections.objects.spec[0]._verbs._step = '$a = 1';
+
+      mobj.setVerb('_step', '$a = (test]', function(err) {
+        expect(err).to.be.an.instanceof(NMLSyntaxError);
+        expect(app.collections.objects.spec[0]._verbs._step).to.equal('$a = 1');
         done();
       });
     });
