@@ -1,9 +1,10 @@
 var expect = require('chai').expect;
 var MObject = require('../lib/mobject');
+var NML = require('../lib/nml');
 var ObjectId = require('mongodb').ObjectId;
 
 function FakeMongoCollection(spec) {
-  this.spec = spec;
+  this.spec = spec || [];
 }
 
 // only finds by id
@@ -15,7 +16,25 @@ FakeMongoCollection.prototype.findOne = function(queryDoc, callback) {
 };
 
 FakeMongoCollection.prototype.updateOne = function(queryDoc, doc, options, callback) {
-  // TODO
+  var cb = callback || options;
+  var ops = typeof(options) === 'object' ? options : {};
+  for(var obj of this.spec) {
+    if(obj._id == queryDoc._id) {
+      for(var prop in doc) { obj[prop] = doc[prop]; }
+      return cb(null);
+    }
+  }
+  if(ops.upsert) {
+    doc._id = queryDoc._id;
+    this.spec.push(doc);
+    return cb(null);
+  }
+  cb(new Error('no docs match'));
+};
+
+FakeMongoCollection.prototype.insertOne = function(doc, callback) {
+  this.spec.push(doc);
+  callback();
 };
 
 describe('MObject', function() {
@@ -25,17 +44,9 @@ describe('MObject', function() {
       var mobj = new MObject();
       expect(mobj.id).to.be.an.instanceof(ObjectId);
     });
-
-    it('sets the creation time to within a second of the object being created',
-      function() {
-      var mobj = new MObject();
-      var now = new Date() / 1000;
-      expect(mobj.created).to.be.gte(now - 1);
-      expect(mobj.created).to.be.lte(now + 1);
-    });
   });
 
-  describe('#load', function() {
+  describe('#vmFromVerb', function() {
     var app = {
       collections: {
         objects: new FakeMongoCollection(
@@ -50,46 +61,123 @@ describe('MObject', function() {
       }
     };
 
-    it('can load it\'s state from a mongodb document', function(done) {
+    it('can create a VM with the provided verb\'s source', function(done) {
       var mobj = new MObject(app);
       app.collections.objects.spec[0]._id = mobj.id;
 
-      mobj.load(function(err) {
+      mobj.vmFromVerb('_step', function(err, vm) {
         expect(err).to.be.null;
+        expect(vm).to.be.an.instanceof(NML.VM);
+        expect(vm.state.ast).to.eql([{type: 'assign', op: '=', src: [1], dst: {type: 'var', name: 'a'}}]);
         done();
       });
     });
 
-    it('can load properties', function(done) {
+    it('returns an error when the verb doesn\'t exist', function(done) {
       var mobj = new MObject(app);
       app.collections.objects.spec[0]._id = mobj.id;
 
-      mobj.load(function(err) {
+      mobj.vmFromVerb('_blah', function(err, vm) {
+        expect(err).to.be.an.instanceof(Error);
+        expect(err.message).to.equal('verb does not exist');
+        expect(vm).to.be.undefined;
+        done();
+      });
+    });
+  });
+
+  describe('#getProp', function() {
+    var app = {
+      collections: {
+        objects: new FakeMongoCollection(
+          [{
+            _verbs: {
+              _step: '$a = 1'
+            },
+            _created: 12345,
+            ayy: 'lmao'
+          }]
+        )
+      }
+    };
+
+    it('can retrieve an object property', function(done) {
+      var mobj = new MObject(app);
+      app.collections.objects.spec[0]._id = mobj.id;
+
+      mobj.getProp('ayy', function(err, value) {
         expect(err).to.be.null;
-        expect(mobj.props.ayy).to.equal('lmao');
+        expect(value).to.equal('lmao');
         done();
       });
     });
 
-    it('can load verbs', function(done) {
+    it('returns NML null on a no-read property', function(done) {
       var mobj = new MObject(app);
       app.collections.objects.spec[0]._id = mobj.id;
 
-      mobj.load(function(err) {
+      mobj.getProp('_verbs', function(err, value) {
         expect(err).to.be.null;
-        expect(mobj.verbs._step).to.not.be.undefined;
-        expect(mobj.verbs._step.src).to.equal('$a = 1');
+        expect(value).to.eql({type: 'null', value: null});
         done();
       });
     });
 
-    it('can load the creation time', function(done) {
+    it('can retrieve a read-only property', function(done) {
       var mobj = new MObject(app);
       app.collections.objects.spec[0]._id = mobj.id;
 
-      mobj.load(function(err) {
+      mobj.getProp('_created', function(err, value) {
         expect(err).to.be.null;
-        expect(mobj.created).to.equal(12345);
+        expect(value).to.eql(12345);
+        done();
+      });
+    });
+  });
+
+  describe('#setProp', function() {
+    var app = {
+      collections: {
+        objects: new FakeMongoCollection(
+          [{
+            _verbs: {
+              _step: '$a = 1'
+            },
+            _created: 12345
+          }]
+        )
+      }
+    };
+
+    it('can set an object property', function(done) {
+      var mobj = new MObject(app);
+      app.collections.objects.spec[0]._id = mobj.id;
+
+      mobj.setProp('test', '1234', function(err) {
+        expect(err).to.be.null;
+        expect(app.collections.objects.spec[0].test).to.equal('1234');
+        done();
+      });
+    });
+
+    it('doesn\'t set no-read props', function(done) {
+      var mobj = new MObject(app);
+      app.collections.objects.spec[0]._id = mobj.id;
+
+      mobj.setProp('_verbs', 'ayy', function(err) {
+        expect(err).to.be.null;
+        expect(app.collections.objects.spec[0]._verbs).to.be.a('object');
+        done();
+      });
+    });
+
+    it('doesn\'t set read-only props', function(done) {
+      var mobj = new MObject(app);
+      app.collections.objects.spec[0]._id = mobj.id;
+
+      mobj.setProp('_created', 'ayy', function(err) {
+        expect(err).to.be.null;
+        expect(app.collections.objects.spec[0]._created).to.equal(12345);
         done();
       });
     });
