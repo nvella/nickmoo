@@ -3,7 +3,7 @@ var MObject = require('../lib/mobject');
 var ObjectId = require('mongodb').ObjectId;
 
 function FakeMongoCollection(spec) {
-  this.spec = spec;
+  this.spec = spec || [];
 }
 
 // only finds by id
@@ -15,7 +15,20 @@ FakeMongoCollection.prototype.findOne = function(queryDoc, callback) {
 };
 
 FakeMongoCollection.prototype.updateOne = function(queryDoc, doc, options, callback) {
-  // TODO
+  var cb = callback || options;
+  var ops = typeof(options) === 'object' ? options : {};
+  for(var obj of this.spec) {
+    if(obj._id == queryDoc._id) {
+      for(var prop in doc) { obj[prop] = doc[prop]; }
+      return cb(null);
+    }
+  }
+  if(ops.upsert) {
+    doc._id = queryDoc._id;
+    this.spec.push(doc);
+    return cb(null);
+  }
+  cb(new Error('no docs match'));
 };
 
 describe('MObject', function() {
