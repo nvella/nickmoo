@@ -107,6 +107,26 @@ describe('MObject', function() {
     });
   });
 
+  describe('#delVerb', function() {
+    it('can delete a verb', function(done) {
+      mobj.delVerb('_step', function(err) {
+        expect(err).to.be.null;
+        app.collections.objects.findOne({_id: mobj.id}, function(err, doc) {
+          expect(doc._verbs._step).to.be.undefined;
+          done();
+        });
+      });
+    });
+
+    it('returns an error when the verb doesn\'t exist', function(done) {
+      mobj.delVerb('asdf', function(err) {
+        expect(err).to.be.an.instanceof(Error);
+        expect(err.message).to.equal('verb does not exist');
+        done();
+      });
+    });
+  });
+
   describe('#vmFromVerb', function() {
     it('can create a VM with the provided verb\'s source', function(done) {
       mobj.vmFromVerb('_step', function(err, vm) {
