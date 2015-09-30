@@ -21,7 +21,7 @@ describe('MObject', function() {
         MongoClient.connect('mongodb://127.0.0.1:27017/nickmoo-test', function(err, _db) {
           if(err) throw err;
           db = _db;
-          app = { collections: { objects: db.collection('objects') } };
+          app = { rootId: new ObjectId(), collections: { objects: db.collection('objects') } };
           cb();
         });
       },
@@ -55,6 +55,69 @@ describe('MObject', function() {
       function() {
       mobj = new MObject();
       expect(mobj.id).to.be.an.instanceof(ObjectId);
+    });
+  });
+
+  describe('#init', function() {
+    it('can init a blank object in the db', function(done) {
+      mobj = new MObject(app);
+      mobj.init(function(err) {
+        expect(err).to.be.null;
+        app.collections.objects.findOne({_id: mobj.id}, function(err, doc) {
+          expect(doc._id.equals(mobj.id)).to.be.true;
+
+          // Check some basic things, we can't check it 1:1 with OBJ_SKEL as
+          // #init modifies the skeleton (_created, _parent)
+          expect(doc._children).to.eql(MObject.OBJ_SKEL._children);
+          expect(doc._created).to.not.be.zero;
+          // Check if the rootId was set correctly
+          expect(doc._inherit.toString()).to.equal(app.rootId.toString());
+          expect(doc._owner.toString()).to.equal(app.rootId.toString());
+
+          done();
+        });
+      });
+    });
+
+    it('can set the inheritance parent and owner to root', function(done) {
+      mobj = new MObject(app);
+      mobj.init(function(err) {
+        expect(err).to.be.null;
+        app.collections.objects.findOne({_id: mobj.id}, function(err, doc) {
+          // Check if the rootId was set correctly
+          expect(doc._inherit.toString()).to.equal(app.rootId.toString());
+          expect(doc._owner.toString()).to.equal(app.rootId.toString());
+
+          done();
+        });
+      });
+    });
+
+    it('can set the created date to within a second of init', function(done) {
+      mobj = new MObject(app);
+      var date = Math.floor(new Date() / 1000);
+
+      mobj.init(function(err) {
+        expect(err).to.be.null;
+        app.collections.objects.findOne({_id: mobj.id}, function(err, doc) {
+          expect(doc._created).to.be.gte(date - 1);
+          expect(doc._created).to.be.lte(date + 1);
+          done();
+        });
+      });
+    });
+
+    it('can overwrite an object when it already exists', function(done) {
+      app.collections.objects.findOne({_id: mobj.id}, function(err, doc) {
+        expect(doc.ayy).to.equal('lmao');
+        mobj.init(function(err) {
+          expect(err).to.be.null;
+          app.collections.objects.findOne({_id: mobj.id}, function(err, doc) {
+            expect(doc.ayy).to.be.undefined;
+            done();
+          });
+        });
+      });
     });
   });
 
