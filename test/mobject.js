@@ -213,4 +213,46 @@ describe('MObject', function() {
       });
     });
   });
+
+  describe('#delProp', function() {
+    it('can delete a prop', function(done) {
+      mobj.delProp('ayy', function(err) {
+        expect(err).to.be.null;
+        app.collections.objects.findOne({_id: mobj.id}, function(err, doc) {
+          expect(doc.ayy).to.be.undefined;
+          done();
+        });
+      });
+    });
+
+    it('returns an error when the prop doesn\'t exist', function(done) {
+      mobj.delProp('asdf', function(err) {
+        expect(err).to.be.an.instanceof(Error);
+        expect(err.message).to.equal('prop does not exist');
+        done();
+      });
+    });
+
+    it('doesn\'t delete no-read props', function(done) {
+      mobj.delProp('_verbs', function(err) {
+        expect(err).to.be.an.instanceof(Error);
+        expect(err.message).to.equal('prop cannot be deleted');
+        app.collections.objects.findOne({_id: mobj.id}, function(err, doc) {
+          expect(doc._verbs).to.be.a('object');
+          done();
+        });
+      });
+    });
+
+    it('doesn\'t delete read-only props', function(done) {
+      mobj.delProp('_created', function(err) {
+        expect(err).to.be.an.instanceof(Error);
+        expect(err.message).to.equal('prop cannot be deleted');
+        app.collections.objects.findOne({_id: mobj.id}, function(err, doc) {
+          expect(doc._created).to.equal(12345);
+          done();
+        });
+      });
+    });
+  });
 });
