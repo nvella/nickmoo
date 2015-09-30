@@ -1,6 +1,7 @@
 var net = require('net');
 var expect = require('chai').expect;
 var NickMOO = require('../lib/nickmoo');
+var ObjectId = require('mongodb').ObjectId;
 var async = require('async');
 
 describe('NickMOO', function() {
@@ -113,6 +114,29 @@ describe('NickMOO', function() {
           });
         }
       ]);
+    });
+  });
+
+  describe('#mobj', function() {
+    it('returns an MObject with a provided ObjectId', function() {
+      var nickmoo = new NickMOO(config);
+      var id = new ObjectId();
+      expect(nickmoo.mobj(id).id).to.equal(id);
+    });
+
+    it('can convert a provided str ObjId to a MObject', function() {
+      var nickmoo = new NickMOO(config);
+      var id = '012345678901234567890123';
+      expect(nickmoo.mobj(id).id.toString()).to.equal(id);
+    });
+
+    it('returns an MObject with a new id when an invalid id is provided',
+      function() {
+      var nickmoo = new NickMOO(config);
+      expect(nickmoo.mobj()).to.not.be.undefined;
+      expect(nickmoo.mobj(null)).to.not.be.undefined;
+      expect(nickmoo.mobj(123)).to.not.be.undefined;
+      expect(nickmoo.mobj(true)).to.not.be.undefined;
     });
   });
 });
