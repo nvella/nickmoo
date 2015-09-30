@@ -13,6 +13,9 @@ describe('MObject', function() {
   var app, db, mobj;
 
   beforeEach(function(done) {
+    this.timeout(5000); // Set timeout to 5 seconds, as Travis may take a while
+                        // to get mongo set up.
+
     async.series([
       function(cb) {
         MongoClient.connect('mongodb://127.0.0.1:27017/nickmoo-test', function(err, _db) {
