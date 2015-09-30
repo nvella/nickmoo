@@ -29,9 +29,9 @@ describe('MObject', function() {
       function(cb) {
         db.collection('objects').insertOne({
           _verbs: {
-            _step: '$a = 1',
-            put: '$a = 2',
-            badSyntax: 'if\n$a = 1\nend'
+            _step: {type: 'verb', src: '$a = 1'},
+            put: {type: 'verb', src: '$a = 2'},
+            badSyntax: {type: 'verb', src: 'if\n$a = 1\nend'}
           },
           _created: 12345,
           ayy: 'lmao'
@@ -123,18 +123,18 @@ describe('MObject', function() {
 
   describe('#getVerb', function() {
     it('can retreive verb source from the db', function(done) {
-      mobj.getVerb('_step', function(err, src) {
+      mobj.getVerb('_step', function(err, verb) {
         expect(err).to.be.null;
-        expect(src).to.be.equal('$a = 1');
+        expect(verb).to.be.eql({type: 'verb', src: '$a = 1'});
         done();
       });
     });
 
     it('returns an error when the verb doesn\'t exist', function(done) {
-      mobj.getVerb('_blah', function(err, src) {
+      mobj.getVerb('_blah', function(err, verb) {
         expect(err).to.be.an.instanceof(Error);
         expect(err.message).to.equal('verb does not exist');
-        expect(src).to.be.undefined;
+        expect(verb).to.be.undefined;
         done();
       });
     });
@@ -156,7 +156,7 @@ describe('MObject', function() {
       mobj.setVerb('_step', '$a = 4', function(err) {
         expect(err).to.be.null;
         app.collections.objects.findOne({_id: mobj.id}, function(err, doc) {
-          expect(doc._verbs._step).to.equal('$a = 4');
+          expect(doc._verbs._step).to.eql({type: 'verb', src: '$a = 4'});
           done();
         });
       });
@@ -165,8 +165,8 @@ describe('MObject', function() {
     it('returns an error when trying to set bad syntax', function(done) {
       mobj.setVerb('_step', '$a = (test]', function(err) {
         expect(err).to.be.an.instanceof(NMLSyntaxError);
-        mobj.getVerb('_step', function(err, src) {
-          expect(src).to.equal('$a = 1');
+        mobj.getVerb('_step', function(err, verb) {
+          expect(verb).to.eql({type: 'verb', src: '$a = 1'});
           done();
         });
       });
