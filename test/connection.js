@@ -84,6 +84,17 @@ describe('Connection', function() {
       conn.deinit();
       expect(sock.destroyed).to.be.true;
     });
+
+    it('doesn\'t deinit twice', function() {
+      var app = new FakeApp();
+      var sock = new FakeSock();
+      var conn = new Connection(app, sock);
+      app.connections.push(conn);
+      conn.init();
+      conn.deinit();
+      expect(conn.deinit()).to.be.false;
+      expect(sock.destroyed).to.be.true;
+    });
   });
 
   describe('#print', function() {
