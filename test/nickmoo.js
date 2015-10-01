@@ -2,22 +2,40 @@ var net = require('net');
 var expect = require('chai').expect;
 var NickMOO = require('../lib/nickmoo');
 var ObjectId = require('mongodb').ObjectId;
+var MongoClient = require('mongodb').MongoClient;
 var MongoCollection = require('mongodb').Collection;
 var async = require('async');
 
 describe('NickMOO', function() {
   var config = {
     port: 54321,
-    dbUri: "mongodb://127.0.0.1:27017/nickmoo",
+    dbUri: "mongodb://127.0.0.1:27017/nickmoo-test",
     serverName: "NickMOO Development"
   };
 
   var nickmoo;
   this.timeout(5000);
 
-  beforeEach(function() {
+  var worldConfig = {
+    rootId: new ObjectId()
+  };
+
+  beforeEach(function(done) {
     nickmoo = new NickMOO(config);
     nickmoo.log = function() {};
+
+    // Set up the db for the tests
+    MongoClient.connect('mongodb://127.0.0.1:27017/nickmoo-test', function(err, db) {
+      if(err) throw err;
+      async.series([
+        function(cb) { db.collection('objects').deleteMany({}, cb); },
+        function(cb) {  db.collection('config').deleteMany({}, cb); },
+        function(cb) {
+          db.collection('config').insertOne(worldConfig, cb);
+        },
+        function(cb) { db.close(false, cb); }
+      ], done);
+    });
   });
 
   describe('#init', function() {
@@ -34,7 +52,7 @@ describe('NickMOO', function() {
       nickmoo.log = function(str) {
         messages.push(str);
       };
-      nickmoo.init(function() {
+      nickmoo.init(function(err) {
         var client = net.connect({port: config.port}, function() {
           async.series([
             // process.nextTick doesn’t work here for some reason, possibly
@@ -52,6 +70,38 @@ describe('NickMOO', function() {
           ]);
         });
       });
+    });
+
+    it('can load the root object ID from the world config', function(done) {
+      nickmoo.init(function() {
+        nickmoo.deinit(function() {
+          expect(nickmoo.rootId.toString()).to.equal(worldConfig.rootId.toString());
+          done();
+        });
+      });
+    });
+
+    it('returns an error when the config object doesn\'t exist', function(done) {
+      var messages = [];
+      nickmoo.log = function(str) {
+        messages.push(str);
+      };
+
+      async.series([
+        function(cb) {
+          MongoClient.connect('mongodb://127.0.0.1:27017/nickmoo-test', function(err, db) {
+            db.collection('config').deleteMany({}, function() { db.close(null, cb); });
+          });
+        },
+        function(cb) {
+          nickmoo.init(function(err) {
+            expect(err).to.not.be.null;
+            expect(messages).to.include('Error: The database has not been set-up for NickMOO yet.');
+            expect(messages).to.include('Please run the `db-init\' script found in the \'util/\' directory.');
+            cb();
+          });
+        }
+      ], done);
     });
   });
 
@@ -108,7 +158,7 @@ describe('NickMOO', function() {
       nickmoo.initDb(function(err) {
         expect(err).to.be.null;
         nickmoo.db.stats({}, function(err, stats) {
-          nickmoo.deinitDb(function() {
+          nickmoo.deinitDb(function(err) {
             expect(err).to.be.null;
             expect(stats).to.be.a('object');
             done();
