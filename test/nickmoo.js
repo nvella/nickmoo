@@ -33,11 +33,13 @@ describe('NickMOO', function() {
       nickmoo.init(function() {
         var client = net.connect({port: config.port}, function() {
           async.series([
-            function(cb) { setTimeout(cb, 10); },
+            // process.nextTick doesn’t work here for some reason, possibly
+            // event loop magic with process.nextTick vs setTimeout priorities
+            function(cb) { setTimeout(cb, 0); },
             function(cb) { expect(nickmoo.connections).to.not.be.empty; cb(); },
             function(cb) { client.end(cb); },
             function(cb) { nickmoo.deinit(cb); },
-            function(cb) { setTimeout(cb, 10); },
+            function(cb) { setTimeout(cb, 0); },
             function() {
               expect(messages).to.include('accepted connection from ::ffff:127.0.0.1:54321');
               expect(messages).to.include('connection ::ffff:127.0.0.1:54321 deinit');
@@ -61,7 +63,7 @@ describe('NickMOO', function() {
       nickmoo.init(function() {
         var client = net.connect({port: config.port}, function() {
           async.series([
-            function(cb) { setTimeout(cb, 10); },
+            function(cb) { setTimeout(cb, 0); },
             function(cb) { nickmoo.deinit(cb); },
             function(cb) {
               expect(messages).to.include('connection ::ffff:127.0.0.1:54321 deinit');
