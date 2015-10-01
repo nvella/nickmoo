@@ -11,11 +11,16 @@ describe('NickMOO', function() {
     serverName: "NickMOO Development"
   };
 
+  var nickmoo;
   this.timeout(5000);
+
+  beforeEach(function() {
+    nickmoo = new NickMOO(config);
+    nickmoo.log = function() {};
+  });
 
   describe('#init', function() {
     it('can initialize the MOO server', function(done) {
-      var nickmoo = new NickMOO(config);
       nickmoo.init(function() {
         nickmoo.deinit(function() {
           done();
@@ -24,11 +29,9 @@ describe('NickMOO', function() {
     });
 
     it('can accept a connection', function(done) {
-      var nickmoo = new NickMOO(config);
       var messages = [];
       nickmoo.log = function(str) {
         messages.push(str);
-        console.log('NickMOO#init accept connection: ' + str);
       };
       nickmoo.init(function() {
         var client = net.connect({port: config.port}, function() {
@@ -53,11 +56,9 @@ describe('NickMOO', function() {
 
   describe('#deinit', function() {
     it('can close all active connections', function(done) {
-      var nickmoo = new NickMOO(config);
       var messages = [];
       nickmoo.log = function(str) {
         messages.push(str);
-        console.log('NickMOO#deinit close all connections: ' + str);
       };
 
       nickmoo.init(function() {
@@ -80,11 +81,9 @@ describe('NickMOO', function() {
     });
 
     it('doesn\'t allow new tcp clients to connect', function(done) {
-      var nickmoo = new NickMOO(config);
       var messages = [];
       nickmoo.log = function(str) {
         messages.push(str);
-        console.log('NickMOO#deinit blocks new tcp clients: ' + str);
       };
 
       async.series([
@@ -98,11 +97,9 @@ describe('NickMOO', function() {
     });
 
     it('can close the database connection', function(done) {
-      var nickmoo = new NickMOO(config);
       var messages = [];
       nickmoo.log = function(str) {
         messages.push(str);
-        console.log('NickMOO#deinit close db connection: ' + str);
       };
 
       async.series([
@@ -121,20 +118,17 @@ describe('NickMOO', function() {
 
   describe('#mobj', function() {
     it('returns an MObject with a provided ObjectId', function() {
-      var nickmoo = new NickMOO(config);
       var id = new ObjectId();
       expect(nickmoo.mobj(id).id).to.equal(id);
     });
 
     it('can convert a provided str ObjId to a MObject', function() {
-      var nickmoo = new NickMOO(config);
       var id = '012345678901234567890123';
       expect(nickmoo.mobj(id).id.toString()).to.equal(id);
     });
 
     it('returns an MObject with a new id when an invalid id is provided',
       function() {
-      var nickmoo = new NickMOO(config);
       expect(nickmoo.mobj()).to.not.be.undefined;
       expect(nickmoo.mobj(null)).to.not.be.undefined;
       expect(nickmoo.mobj(123)).to.not.be.undefined;
