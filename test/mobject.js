@@ -119,6 +119,14 @@ describe('MObject', function() {
         });
       });
     });
+
+    it('can call the callback when options are provided', function(done) {
+      mobj = new MObject(app);
+
+      mobj.init({}, function(err) {
+        done();
+      });
+    });
   });
 
   describe('#getVerb', function() {
