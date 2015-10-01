@@ -127,6 +127,30 @@ describe('MObject', function() {
         done();
       });
     });
+
+    it('can set the inheritance parent when an object id is provided', function(done) {
+      mobj = new MObject(app);
+      var id = new ObjectId();
+
+      mobj.init({inherit: id}, function(err) {
+        mobj.getProp('_inherit', function(err, value) {
+          expect(value.toString()).to.equal(id.toString());
+          done();
+        });
+      });
+    });
+
+    it('can set the inheritance parent when another mobj is provided', function(done) {
+      mobj = new MObject(app);
+      var aMobj = new MObject(app);
+
+      mobj.init({inherit: aMobj}, function(err) {
+        mobj.getProp('_inherit', function(err, value) {
+          expect(value.toString()).to.equal(aMobj.id.toString());
+          done();
+        });
+      });
+    });
   });
 
   describe('#getVerb', function() {
