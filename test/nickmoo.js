@@ -2,6 +2,7 @@ var net = require('net');
 var expect = require('chai').expect;
 var NickMOO = require('../lib/nickmoo');
 var ObjectId = require('mongodb').ObjectId;
+var MongoCollection = require('mongodb').Collection;
 var async = require('async');
 
 describe('NickMOO', function() {
@@ -95,7 +96,42 @@ describe('NickMOO', function() {
         }
       ]);
     });
+  });
 
+  describe('#initDb', function() {
+    it('can connect to the database', function(done) {
+      var messages = [];
+      nickmoo.log = function(str) {
+        messages.push(str);
+      };
+
+      nickmoo.initDb(function(err) {
+        expect(err).to.be.null;
+        nickmoo.db.stats({}, function(err, stats) {
+          nickmoo.deinitDb(function() {
+            expect(err).to.be.null;
+            expect(stats).to.be.a('object');
+            done();
+          });
+        });
+      });
+    });
+
+    it('can connect to the objects collection', function(done) {
+      var messages = [];
+      nickmoo.log = function(str) {
+        messages.push(str);
+      };
+
+      nickmoo.initDb(function(err) {
+        expect(err).to.be.null;
+        expect(nickmoo.collections.objects).to.be.an.instanceof(MongoCollection);
+        nickmoo.deinitDb(function() { done(); });
+      });
+    });
+  });
+
+  describe('#deinitDb', function() {
     it('can close the database connection', function(done) {
       var messages = [];
       nickmoo.log = function(str) {
@@ -103,8 +139,8 @@ describe('NickMOO', function() {
       };
 
       async.series([
-        function(cb) { nickmoo.init(cb); },
-        function(cb) { nickmoo.deinit(cb); },
+        function(cb) { nickmoo.initDb(cb); },
+        function(cb) { nickmoo.deinitDb(cb); },
         function() {
           nickmoo.db.stats({}, function(err) {
             expect(err).to.not.be.null;
