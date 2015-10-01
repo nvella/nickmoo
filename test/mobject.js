@@ -151,6 +151,30 @@ describe('MObject', function() {
         });
       });
     });
+
+    it('can set the owner when an object id is provided', function(done) {
+      mobj = new MObject(app);
+      var id = new ObjectId();
+
+      mobj.init({owner: id}, function(err) {
+        mobj.getProp('_owner', function(err, value) {
+          expect(value.toString()).to.equal(id.toString());
+          done();
+        });
+      });
+    });
+
+    it('can set the owner when another mobj is provided', function(done) {
+      mobj = new MObject(app);
+      var aMobj = new MObject(app);
+
+      mobj.init({owner: aMobj}, function(err) {
+        mobj.getProp('_owner', function(err, value) {
+          expect(value.toString()).to.equal(aMobj.id.toString());
+          done();
+        });
+      });
+    });
   });
 
   describe('#getVerb', function() {
