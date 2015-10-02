@@ -249,35 +249,6 @@ describe('MObject', function() {
     });
   });
 
-  describe('#vmFromVerb', function() {
-    it('can create a VM with the provided verb\'s source', function(done) {
-      mobj.vmFromVerb('_step', function(err, vm) {
-        expect(err).to.be.null;
-        expect(vm).to.be.an.instanceof(NML.VM);
-        expect(vm.state.ast).to.eql([{type: 'assign', op: '=', src: [1], dst: {type: 'var', name: 'a'}}]);
-        done();
-      });
-    });
-
-    it('returns an error when the verb doesn\'t exist', function(done) {
-      mobj.vmFromVerb('_blah', function(err, vm) {
-        expect(err).to.be.an.instanceof(Error);
-        expect(err.message).to.equal('verb does not exist');
-        expect(vm).to.be.undefined;
-        done();
-      });
-    });
-
-    it('returns an error on parser syntax error', function(done) {
-      mobj.vmFromVerb('badSyntax', function(err, vm) {
-        expect(err).to.be.an.instanceof(NMLSyntaxError);
-        expect(err.message).to.equal('line 1: if usage: if <expr>');
-        expect(vm).to.be.undefined;
-        done();
-      });
-    })
-  });
-
   describe('#getProp', function() {
     it('can retrieve an object property', function(done) {
       mobj.getProp('ayy', function(err, value) {
@@ -376,5 +347,34 @@ describe('MObject', function() {
         });
       });
     });
+  });
+
+  describe('#vmFromVerb', function() {
+    it('can create a VM with the provided verb\'s source', function(done) {
+      mobj.vmFromVerb('_step', function(err, vm) {
+        expect(err).to.be.null;
+        expect(vm).to.be.an.instanceof(NML.VM);
+        expect(vm.state.ast).to.eql([{type: 'assign', op: '=', src: [1], dst: {type: 'var', name: 'a'}}]);
+        done();
+      });
+    });
+
+    it('returns an error when the verb doesn\'t exist', function(done) {
+      mobj.vmFromVerb('_blah', function(err, vm) {
+        expect(err).to.be.an.instanceof(Error);
+        expect(err.message).to.equal('verb does not exist');
+        expect(vm).to.be.undefined;
+        done();
+      });
+    });
+
+    it('returns an error on parser syntax error', function(done) {
+      mobj.vmFromVerb('badSyntax', function(err, vm) {
+        expect(err).to.be.an.instanceof(NMLSyntaxError);
+        expect(err.message).to.equal('line 1: if usage: if <expr>');
+        expect(vm).to.be.undefined;
+        done();
+      });
+    })
   });
 });
