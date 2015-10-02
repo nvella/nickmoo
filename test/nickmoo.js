@@ -1,6 +1,7 @@
 var net = require('net');
 var expect = require('chai').expect;
 var NickMOO = require('../lib/nickmoo');
+var MObject = require('../lib/mobject');
 var ObjectId = require('mongodb').ObjectId;
 var MongoClient = require('mongodb').MongoClient;
 var MongoCollection = require('mongodb').Collection;
@@ -72,10 +73,10 @@ describe('NickMOO', function() {
       });
     });
 
-    it('can load the root object ID from the world config', function(done) {
+    it('can load the root object from the id provided in the world config', function(done) {
       nickmoo.init(function() {
         nickmoo.deinit(function() {
-          expect(nickmoo.rootId.toString()).to.equal(worldConfig.rootId.toString());
+          expect(nickmoo.rootObj.id.toString()).to.equal(worldConfig.rootId.toString());
           done();
         });
       });
