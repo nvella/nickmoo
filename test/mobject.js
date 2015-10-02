@@ -21,7 +21,7 @@ describe('MObject', function() {
         MongoClient.connect('mongodb://127.0.0.1:27017/nickmoo-test', function(err, _db) {
           if(err) throw err;
           db = _db;
-          app = { rootId: new ObjectId(), collections: { objects: db.collection('objects') } };
+          app = { rootObj: new MObject(), collections: { objects: db.collection('objects') } };
           cb();
         });
       },
@@ -71,8 +71,8 @@ describe('MObject', function() {
           expect(doc._children).to.eql(MObject.OBJ_SKEL._children);
           expect(doc._created).to.not.be.zero;
           // Check if the rootId was set correctly
-          expect(doc._inherit.toString()).to.equal(app.rootId.toString());
-          expect(doc._owner.toString()).to.equal(app.rootId.toString());
+          expect(doc._inherit.toString()).to.equal(app.rootObj.id.toString());
+          expect(doc._owner.toString()).to.equal(app.rootObj.id.toString());
 
           done();
         });
@@ -85,8 +85,8 @@ describe('MObject', function() {
         expect(err).to.be.null;
         app.collections.objects.findOne({_id: mobj.id}, function(err, doc) {
           // Check if the rootId was set correctly
-          expect(doc._inherit.toString()).to.equal(app.rootId.toString());
-          expect(doc._owner.toString()).to.equal(app.rootId.toString());
+          expect(doc._inherit.toString()).to.equal(app.rootObj.id.toString());
+          expect(doc._owner.toString()).to.equal(app.rootObj.id.toString());
 
           done();
         });
