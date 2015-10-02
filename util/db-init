@@ -1,0 +1,152 @@
+#!/usr/bin/env node
+/*
+ *  NickMOO Database Initialization Tool
+ *  Usage:
+ *    1. Start your database
+ *    2. ./db-init [path to config.json default:../config.json]
+ *
+ *  This tool is an interactive script.
+ *
+ */
+
+function title(str) {
+  console.log('\n## ' + str);
+}
+
+title('NickMOO Database Initialization Tool');
+
+var fs = require('fs');
+var async = require('async');
+var MongoClient = require('mongodb').MongoClient;
+var readline = require('readline');
+var NickMOO = require('../lib/nickmoo');
+
+// Create the readline
+var rl = readline.createInterface({
+  input: process.stdin,
+  output: process.stdout
+});
+
+var configPath = process.argv[2] || '../config.json';
+var nickmoo, rootObj, roomClassObj;
+var config = {};
+var data = {};
+
+async.series([
+  // Load the configuration
+  function(callback) {
+    title('loading configuration...');
+    fs.readFile(configPath, function (err, data) {
+      if (err) {
+        console.log('could not load configuration from ' + configPath);
+        console.log('please provide the correct config.json path as an argument to this script');
+        process.exit(1);
+      }
+      config = JSON.parse(data);
+      console.log('configuration loaded:');
+      console.log(config);
+      callback();
+    });
+  },
+
+  // Confirm with the user that they want to complete this operation
+  function(callback) {
+    title('WARNING');
+    console.log('This tool will erase all NickMOO data in the ' +
+                'database specified in the configuration above. Do you wish ' +
+                'to continue?')
+    rl.question('y/n>', function(ans) {
+      if(ans.toLowerCase() !== 'y') process.exit(1);
+      callback();
+    });
+  },
+
+  // Create a NickMOO instance and init the DB connection
+  function(callback) {
+    title('creating NickMOO instance...');
+    nickmoo = new NickMOO(config);
+    console.log('  nickmoo#initDb...');
+    nickmoo.initDb(callback);
+  },
+
+  // Delete all the existing data
+  function(callback) {
+    title('deleting existing data...');
+    async.series([
+      function(cb) { nickmoo.collections.objects.deleteMany({}, cb); },
+      function(cb) { nickmoo.collections.config.deleteMany({}, cb); }
+    ], callback);
+  },
+
+  // Create the root object
+  function(callback) {
+    title('creating root object...');
+    rootObj = nickmoo.mobj();
+    async.series([
+      function(cb) { rootObj.init(cb); },
+      function(cb) { nickmoo.rootObj = rootObj;
+                     rootObj.setProp('name', 'Root object', cb); },
+      function(cb) { rootObj.setProp('desc', 'NickMOO root object', cb); }
+    ], callback);
+  },
+
+  // TODO, Load the stdlib into the root object
+  // Probably do this via a class in lib/ so we can test it
+
+  // Create the Room class-object
+  function(callback) {
+    title('creating Room class-object...');
+    roomClassObj = nickmoo.mobj();
+    async.series([
+      function(cb) { roomClassObj.init(cb); },
+      function(cb) { roomClassObj.setProp('name', 'Room', cb); },
+      function(cb) { roomClassObj.setProp('desc', 'Room class object', cb); },
+      // The next line sets the verb that handles the childJoin event, which is
+      // emitted to a parent object whenever a child joins it
+      // In this case, it calls the 'tell' verb, which sends an object-to-object
+      // message (The recipient will receieve a 'msg' event which it can handles
+      // however it chooses. In case of the player, it will call into native
+      // Javascript code which will send the message to the socket.)
+      function(cb) { roomClassObj.setVerb('_on_childJoin', 'tell($directObj %desc)', cb);},
+      function(cb) {rootObj.setProp('idRoomClass', roomClassObj.id, cb);}
+    ], callback);
+  },
+
+  // Create the ConnectRoom
+  function(callback) {
+    title('creating the ConnectRoom...');
+    console.log('This is the room users are placed in before they authenticate.');
+    console.log('A welcome message is displayed to the users in this room.');
+    console.log('A welcome message will be loaded from the file titled\n');
+    console.log('  db-init-welcomemsg.js\n');
+    console.log('which you can find in the same directory as the db-init script.');
+    console.log('Please modify this file to set your welcome message and strike return when\nready.');
+
+    rl.question('>', function() {
+      var msg = require('./db-init-welcomemsg.js');
+      console.log('Welcome message: \n' + msg);
+
+      var connectRoomObj = nickmoo.mobj();
+      async.series([
+        function(cb) {connectRoomObj.init({inherit: roomClassObj}, cb);},
+        function(cb) {connectRoomObj.setProp('name', 'Connection room', cb);},
+        function(cb) {connectRoomObj.setProp('desc', msg, cb);},
+        function(cb) {rootObj.setProp('idConnectRoom', connectRoomObj.id, cb);}
+      ], callback);
+    });
+  },
+
+  // Close the DB
+  function(callback) {
+    title('closing the database...');
+    nickmoo.deinitDb(callback);
+  },
+
+  // Clean up, done
+  function(callback) {
+    rl.close();
+    callback();
+    title('Done');
+    console.log('You can now start the NickMOO server.');
+  }
+]);
