@@ -10,7 +10,7 @@ var ObjectId = require('mongodb').ObjectId;
 
 describe('MObject', function() {
 
-  var app, db, mobj;
+  var app, db, mobj, inheritObjId;
 
   beforeEach(function(done) {
     this.timeout(5000); // Set timeout to 5 seconds, as Travis may take a while
@@ -21,12 +21,40 @@ describe('MObject', function() {
         MongoClient.connect('mongodb://127.0.0.1:27017/nickmoo-test', function(err, _db) {
           if(err) throw err;
           db = _db;
-          app = { rootObj: new MObject(), collections: { objects: db.collection('objects') } };
+          app = {
+            rootObj: new MObject(),
+            collections: { objects: db.collection('objects') },
+            mobj: function(id) {
+              switch (typeof(id)) {
+                case 'string':
+                  return new MObject(this, new ObjectId(id));
+                case 'object':
+                  if(id instanceof ObjectId) return new MObject(this, id);
+                  // Otherwise, fall through to default
+                default:
+                  return new MObject(this); // Just return a new mobject
+              }
+            }
+          };
           cb();
         });
       },
       function(cb) {db.collection('objects').deleteMany({}, cb);}, // Remove everything in the objects collection
-      function(cb) {
+      function(cb) { // Create an inheritance parent
+        db.collection('objects').insertOne({
+          _verbs: {
+            test: {type: 'verb', src: '$a = 1234'},
+          },
+          _created: 12345,
+          _inherit: null,
+        }, function(err, res) {
+          if(err) return done(err);
+          // Find the id and create a new MObject with it
+          inheritObjId = res.insertedId;
+          cb();
+        }); // Insert some dummy data
+      },
+      function(cb) { // Create a standard object
         db.collection('objects').insertOne({
           _verbs: {
             _step: {type: 'verb', src: '$a = 1'},
@@ -34,6 +62,7 @@ describe('MObject', function() {
             badSyntax: {type: 'verb', src: 'if\n$a = 1\nend'}
           },
           _created: 12345,
+          _inherit: inheritObjId,
           ayy: 'lmao'
         }, function(err, res) {
           if(err) return done(err);
@@ -345,6 +374,34 @@ describe('MObject', function() {
           expect(doc._created).to.equal(12345);
           done();
         });
+      });
+    });
+  });
+
+  describe('#resolveVerb', function() {
+    it('can return the verb object of a local verb', function(done) {
+      mobj.resolveVerb('_step', function(err, verb) {
+        expect(err).to.be.null;
+        expect(verb).to.be.a('object');
+        expect(verb).to.eql({type: 'verb', src: '$a = 1'});
+        done();
+      });
+    });
+
+    it('can return the verb object of an inherited verb', function(done) {
+      mobj.resolveVerb('test', function(err, verb) {
+        expect(err).to.be.null;
+        expect(verb).to.be.a('object');
+        expect(verb).to.eql({type: 'verb', src: '$a = 1234'});
+        done();
+      });
+    });
+
+    it('returns an error when the verb cannot be found', function(done) {
+      mobj.resolveVerb('notfound', function(err, verb) {
+        expect(err).to.be.an.instanceof(Error);
+        expect(err.message).to.equal('verb cannot be found');
+        done();
       });
     });
   });
