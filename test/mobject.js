@@ -400,7 +400,7 @@ describe('MObject', function() {
     it('returns an error when the verb cannot be found', function(done) {
       mobj.resolveVerb('notfound', function(err, verb) {
         expect(err).to.be.an.instanceof(Error);
-        expect(err.message).to.equal('verb cannot be found');
+        expect(err.message).to.equal('verb does not exist');
         done();
       });
     });
