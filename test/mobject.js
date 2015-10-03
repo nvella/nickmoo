@@ -401,7 +401,7 @@ describe('MObject', function() {
       });
     });
 
-    it('can return an error when the _children prop doesn\'t exist', function(done) {
+    it('returns an error when the _children prop doesn\'t exist', function(done) {
       app.collections.objects.updateOne({_id: mobj.id}, {$unset: {_children: ''}}, function(err, doc) {
         mobj.getChildren(function(err, children) {
           expect(err).to.not.be.null;
@@ -411,7 +411,7 @@ describe('MObject', function() {
       });
     });
 
-    it('can return an error when the _children prop is malformed', function(done) {
+    it('returns an error when the _children prop is malformed', function(done) {
       app.collections.objects.updateOne({_id: mobj.id}, {$set: {_children: 1234}}, function(err, doc) {
         mobj.getChildren(function(err, children) {
           expect(err).to.not.be.null;
