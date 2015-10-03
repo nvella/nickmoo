@@ -422,6 +422,36 @@ describe('MObject', function() {
     });
   });
 
+  describe('#addChild', function() {
+    it('can add an MObject to the children list', function(done) {
+      var id = new ObjectId();
+      mobj.addChild(new MObject(app, id), function(err) {
+        mobj.getChildren(function(err, children) {
+          expect(children.slice(-1)[0].id.toString()).to.equal(id.toString());
+          done();
+        });
+      });
+    });
+
+    it('can add an ObjectId to the children list', function(done) {
+      var id = new ObjectId();
+      mobj.addChild(id, function(err) {
+        mobj.getChildren(function(err, children) {
+          expect(children.slice(-1)[0].id.toString()).to.equal(id.toString());
+          done();
+        });
+      });
+    });
+
+    it('returns an error when trying to add an invalid value', function(done) {
+      mobj.addChild(1234, function(err) {
+        expect(err).to.not.be.null;
+        expect(err.message).to.equal('cannot add this type to the children list');
+        done();
+      });
+    });
+  });
+
   describe('#resolveVerb', function() {
     it('can return the verb object of a local verb', function(done) {
       mobj.resolveVerb('_step', function(err, verb) {
