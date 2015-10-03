@@ -11,6 +11,7 @@ var ObjectId = require('mongodb').ObjectId;
 describe('MObject', function() {
 
   var app, db, mobj, inheritObjId;
+  var mobjChildren = {type: 'array', ctx: [new ObjectId(), new ObjectId()]};
 
   beforeEach(function(done) {
     this.timeout(5000); // Set timeout to 5 seconds, as Travis may take a while
@@ -61,6 +62,7 @@ describe('MObject', function() {
             put: {type: 'verb', src: '$a = 2'},
             badSyntax: {type: 'verb', src: 'if\n$a = 1\nend'}
           },
+          _children: mobjChildren,
           _created: 12345,
           _inherit: inheritObjId,
           ayy: 'lmao'
@@ -372,6 +374,40 @@ describe('MObject', function() {
         expect(err.message).to.equal('prop cannot be deleted');
         app.collections.objects.findOne({_id: mobj.id}, function(err, doc) {
           expect(doc._created).to.equal(12345);
+          done();
+        });
+      });
+    });
+  });
+
+  describe('#getChildren', function() {
+    it('can return an array of all the children IDs in MObjects', function(done) {
+      mobj.getChildren(function(err, children) {
+        expect(err).to.be.null;
+        expect(children).to.be.an.array;
+        expect(children[0]).to.be.an.instanceof(MObject);
+        expect(children[1]).to.be.an.instanceof(MObject);
+        expect(children[0].id.toString()).to.equal(mobjChildren.ctx[0].toString());
+        expect(children[1].id.toString()).to.equal(mobjChildren.ctx[1].toString());
+        done();
+      });
+    });
+
+    it('can return an error when the _children prop doesn\'t exist', function(done) {
+      app.collections.objects.updateOne({_id: mobj.id}, {$unset: {_children: ''}}, function(err, doc) {
+        mobj.getChildren(function(err, children) {
+          expect(err).to.not.be.null;
+          expect(err.message).to.equal('prop does not exist');
+          done();
+        });
+      });
+    });
+
+    it('can return an error when the _children prop is malformed', function(done) {
+      app.collections.objects.updateOne({_id: mobj.id}, {$set: {_children: 1234}}, function(err, doc) {
+        mobj.getChildren(function(err, children) {
+          expect(err).to.not.be.null;
+          expect(err.message).to.equal('_children property malformed');
           done();
         });
       });
