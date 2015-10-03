@@ -224,6 +224,26 @@ describe('MObject', function() {
     });
   });
 
+  describe('#delete', function() {
+    it('can delete the object from the database', function(done) {
+      mobj.delete(function(err) {
+        expect(err).to.be.null;
+        app.collections.objects.findOne({_id: mobj.id}, function(err, doc) {
+          expect(doc).to.be.null;
+          done();
+        });
+      });
+    });
+
+    it('returns an error when the object doesn\'t exist', function(done) {
+      app.mobj().delete(function(err) {
+        expect(err).to.not.be.null;
+        expect(err.message).to.equal('object does not exist');
+        done();
+      });
+    });
+  });
+
   describe('#getVerb', function() {
     it('can retreive verb source from the db', function(done) {
       mobj.getVerb('_step', function(err, verb) {
