@@ -304,6 +304,14 @@ describe('MObject', function() {
         done();
       });
     });
+
+    it('returns an error when the prop does not exist', function(done) {
+      mobj.getProp('doesntExist', function(err, value) {
+        expect(err).to.not.be.null;
+        expect(err.message).to.equal('prop does not exist');
+        done();
+      });
+    });
   });
 
   describe('#setProp', function() {
