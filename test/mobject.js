@@ -10,8 +10,8 @@ var ObjectId = require('mongodb').ObjectId;
 
 describe('MObject', function() {
 
-  var app, db, mobj, inheritObjId;
-  var mobjChildren = {type: 'array', ctx: [new ObjectId(), new ObjectId()]};
+  var app, db, mobj, inheritObjId, childMobj;
+  var mobjChildren = {type: 'array', ctx: []};
 
   beforeEach(function(done) {
     this.timeout(5000); // Set timeout to 5 seconds, as Travis may take a while
@@ -52,6 +52,22 @@ describe('MObject', function() {
           if(err) return done(err);
           // Find the id and create a new MObject with it
           inheritObjId = res.insertedId;
+          cb();
+        }); // Insert some dummy data
+      },
+      function(cb) { // Create an object that will be a child of the standard object
+        db.collection('objects').insertOne({
+          _verbs: {
+            childVerb: {type: 'verb', src: '$a = 1'}
+          },
+          _children: [],
+          _created: 12345,
+          _inherit: inheritObjId,
+          ayy: 'testing'
+        }, function(err, res) {
+          if(err) return done(err);
+          mobjChildren.ctx.push(res.insertedId);
+          childMobj = new MObject(app, res.insertedId);
           cb();
         }); // Insert some dummy data
       },
@@ -447,6 +463,25 @@ describe('MObject', function() {
       mobj.addChild(1234, function(err) {
         expect(err).to.not.be.null;
         expect(err.message).to.equal('cannot add this type to the children list');
+        done();
+      });
+    });
+  });
+
+  describe('#getParent', function() {
+    it('can return an MObject of an object\'s parent', function(done) {
+      childMobj.getParent(function(err, parent) {
+        expect(err).to.be.null;
+        expect(parent).to.be.an.instanceof(MObject);
+        expect(parent.id.toString()).to.equal(mobj.id.toString());
+        done();
+      });
+    });
+
+    it('returns null when the object has no parent', function(done) {
+      mobj.getParent(function(err, parent) {
+        expect(err).to.be.null;
+        expect(parent).to.be.null;
         done();
       });
     });
