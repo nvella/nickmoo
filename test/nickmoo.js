@@ -118,6 +118,7 @@ describe('NickMOO', function() {
           async.series([
             function(cb) { setTimeout(cb, 0); },
             function(cb) { nickmoo.deinit(cb); },
+            function(cb) { setTimeout(cb, 0); },
             function(cb) {
               expect(messages).to.include('connection ::ffff:127.0.0.1:54321 deinit');
               expect(nickmoo.connections).to.be.empty;
