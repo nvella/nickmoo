@@ -58,11 +58,11 @@ describe('NickMOO', function() {
           async.series([
             // process.nextTick doesn’t work here for some reason, possibly
             // event loop magic with process.nextTick vs setTimeout priorities
-            function(cb) { setTimeout(cb, 1); },
+            function(cb) { setTimeout(cb, 5); },
             function(cb) { expect(nickmoo.connections).to.not.be.empty; cb(); },
             function(cb) { client.end(cb); },
             function(cb) { nickmoo.deinit(cb); },
-            function(cb) { setTimeout(cb, 1); },
+            function(cb) { setTimeout(cb, 5); },
             function() {
               expect(messages).to.include('accepted connection from ::ffff:127.0.0.1:54321');
               expect(messages).to.include('connection ::ffff:127.0.0.1:54321 deinit');
