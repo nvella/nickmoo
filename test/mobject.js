@@ -610,5 +610,32 @@ describe('MObject', function() {
         done();
       });
     });
+
+    it('can search up the inheritance tree for a local verb', function(done) {
+      var dirObj = new ObjectId();
+      var indirObj = new ObjectId();
+      var verbcall = {
+        type: 'verbcall',
+        verb: 'test',
+        directObj: dirObj,
+        prepos: 'in',
+        indirectObj: indirObj,
+        params: [dirObj, 'in', indirObj]
+      };
+
+      mobj.verbcall(verbcall, function(err, vm) {
+        expect(err).to.be.null;
+        expect(vm).to.be.an.instanceof(NML.VM);
+        expect(vm.state.ast).to.eql([{type: 'verb', src: '$a = 1234'}]);
+        expect(vm.state.localVars).to.eql({
+          _verb: 'test',
+          _directObj: dirObj,
+          _prepos: 'in',
+          _indirectObj: indirObj,
+          _params: [dirObj, 'in', indirObj]
+        });
+        done();
+      });
+    });
   });
 });
