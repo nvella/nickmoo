@@ -710,5 +710,31 @@ describe('MObject', function() {
         done();
       });
     });
+
+    it('can resolve a direct object referenced by name to an id',
+      function(done) {
+      var indirObj = new ObjectId();
+      var verbcall = {
+        type: 'verbcall',
+        verb: 'childVerb',
+        directObj: ['child', 'object'],
+        prepos: 'in',
+        indirectObj: indirObj,
+        params: ['child', 'object', 'in', indirObj]
+      };
+
+      mobj.verbcall(verbcall, function(err, vm) {
+        expect(err).to.be.null;
+        expect(vm).to.be.an.instanceof(NML.VM);
+        expect(vm.mobj.id.toString()).to.equal(childMobj.id.toString());
+        expect(vm.state.ast).to.eql([{type: 'verb', src: '$a = 1'}]);
+        expect(vm.state.localVars._verb).to.equal('childVerb');
+        expect(vm.state.localVars._directObj.toString()).to.equal(childMobj.id.toString());
+        expect(vm.state.localVars._prepos).to.equal('in');
+        expect(vm.state.localVars._indirectObj).to.eql(indirObj);
+        expect(vm.state.localVars._params).to.eql(['child', 'object', 'in', indirObj]);
+        done();
+      });
+    });
   });
 });
