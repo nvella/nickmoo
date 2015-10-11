@@ -10,8 +10,7 @@ var ObjectId = require('mongodb').ObjectId;
 
 describe('MObject', function() {
 
-  var app, db, mobj, inheritObjId, childMobj;
-  var mobjChildren = {type: 'array', ctx: []};
+  var app, db, mobj, inheritObjId, childMobj, mobjChildren;
 
   beforeEach(function(done) {
     this.timeout(5000); // Set timeout to 5 seconds, as Travis may take a while
@@ -19,6 +18,8 @@ describe('MObject', function() {
 
     async.series([
       function(cb) {
+        mobjChildren = {type: 'array', ctx: []};
+
         MongoClient.connect('mongodb://127.0.0.1:27017/nickmoo-test', function(err, _db) {
           if(err) throw err;
           db = _db;
@@ -70,6 +71,21 @@ describe('MObject', function() {
           if(err) return done(err);
           mobjChildren.ctx.push(res.insertedId);
           childMobj = new MObject(app, res.insertedId);
+          cb();
+        }); // Insert some dummy data
+      },
+      function(cb) { // Create another object that will be a child of the standard object
+        db.collection('objects').insertOne({
+          _verbs: {
+          },
+          _children: [],
+          _created: 12345,
+          _inherit: inheritObjId,
+          name: 'testobj',
+          aliases: {type: 'array', ctx: []}
+        }, function(err, res) {
+          if(err) return done(err);
+          mobjChildren.ctx.push(res.insertedId);
           cb();
         }); // Insert some dummy data
       },
@@ -571,7 +587,7 @@ describe('MObject', function() {
       mobj.resolveChildObj('child object', function(err, mobj) {
         expect(err).to.be.null;
         expect(mobj).to.be.an.instanceof(MObject);
-        expect(mobj.id.toString()).to.equal(childMobj.id);
+        expect(mobj.id.toString()).to.equal(childMobj.id.toString());
         done();
       });
     });
@@ -580,7 +596,15 @@ describe('MObject', function() {
       mobj.resolveChildObj('foo baz', function(err, mobj) {
         expect(err).to.be.null;
         expect(mobj).to.be.an.instanceof(MObject);
-        expect(mobj.id.toString()).to.equal(childMobj.id);
+        expect(mobj.id.toString()).to.equal(childMobj.id.toString());
+        done();
+      });
+    });
+
+    it('returns null when no object was found', function(done) {
+      mobj.resolveChildObj('banana', function(err, mobj) {
+        expect(err).to.be.null;
+        expect(mobj).to.be.null;
         done();
       });
     });
