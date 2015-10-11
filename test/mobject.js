@@ -683,5 +683,32 @@ describe('MObject', function() {
         done();
       });
     });
+
+    it('can search the parent object for a verb', function(done) {
+      var dirObj = new ObjectId();
+      var indirObj = new ObjectId();
+      var verbcall = {
+        type: 'verbcall',
+        verb: 'put',
+        directObj: dirObj,
+        prepos: 'in',
+        indirectObj: indirObj,
+        params: [dirObj, 'in', indirObj]
+      };
+
+      childMobj.verbcall(verbcall, function(err, vm) {
+        expect(err).to.be.null;
+        expect(vm).to.be.an.instanceof(NML.VM);
+        expect(vm.state.ast).to.eql([{type: 'verb', src: '$a = 2'}]);
+        expect(vm.state.localVars).to.eql({
+          _verb: 'put',
+          _directObj: dirObj,
+          _prepos: 'in',
+          _indirectObj: indirObj,
+          _params: [dirObj, 'in', indirObj]
+        });
+        done();
+      });
+    });
   });
 });
