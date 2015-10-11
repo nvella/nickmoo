@@ -63,6 +63,8 @@ describe('MObject', function() {
           _children: [],
           _created: 12345,
           _inherit: inheritObjId,
+          name: 'child object',
+          aliases: {type: 'array', ctx: ['foo', 'foo bar', 'foo baz']},
           ayy: 'testing'
         }, function(err, res) {
           if(err) return done(err);
@@ -562,6 +564,26 @@ describe('MObject', function() {
         done();
       });
     })
+  });
+
+  describe('#resolveChildObj', function() {
+    it('can resolve a child object by it\'s name', function(done) {
+      mobj.resolveChildObj('child object', function(err, mobj) {
+        expect(err).to.be.null;
+        expect(mobj).to.be.an.instanceof(MObject);
+        expect(mobj.id.toString()).to.equal(childMobj.id);
+        done();
+      });
+    });
+
+    it('can resolve a child object by one of it\'s aliases', function(done) {
+      mobj.resolveChildObj('foo baz', function(err, mobj) {
+        expect(err).to.be.null;
+        expect(mobj).to.be.an.instanceof(MObject);
+        expect(mobj.id.toString()).to.equal(childMobj.id);
+        done();
+      });
+    });
   });
 
   describe('#verbcall', function() {
