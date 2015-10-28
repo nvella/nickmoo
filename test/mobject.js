@@ -626,15 +626,15 @@ describe('MObject', function() {
       mobj.verbcall(verbcall, function(err, vm) {
         expect(err).to.be.null;
         expect(vm).to.be.an.instanceof(NML.VM);
-        expect(vm.id.toString()).to.equal(mobj.id.toString());
-        expect(vm.state.localVars._caller.toString()).to.equal(mobj.id.toString());
-        expect(vm.state.ast).to.eql([{type: 'verb', src: '$a = 2'}]);
+        expect(vm.mobj.id.toString()).to.equal(mobj.id.toString());
+        expect(vm.state.ast).to.eql([{ type: 'assign', op: '=', src: [ 2 ], dst: { type: 'var', name: 'a' } }]);
         expect(vm.state.localVars).to.eql({
           _verb: 'put',
           _directObj: dirObj,
           _prepos: 'in',
           _indirectObj: indirObj,
-          _params: [dirObj, 'in', indirObj]
+          _params: [dirObj, 'in', indirObj],
+          _caller: mobj.id
         });
         done();
       });
@@ -674,7 +674,7 @@ describe('MObject', function() {
       mobj.verbcall(verbcall, function(err, vm) {
         expect(err).to.be.null;
         expect(vm).to.be.an.instanceof(NML.VM);
-        expect(vm.id.toString()).to.equal(mobj.id.toString());
+        expect(vm.mobj.id.toString()).to.equal(mobj.id.toString());
         expect(vm.state.localVars._caller.toString()).to.equal(mobj.id.toString());
         expect(vm.state.ast).to.eql([{type: 'verb', src: '$a = 1234'}]);
         expect(vm.state.localVars).to.eql({
@@ -704,7 +704,7 @@ describe('MObject', function() {
         expect(err).to.be.null;
         expect(vm).to.be.an.instanceof(NML.VM);
         // The VM is created in the context of the parent object, where the verb exists
-        expect(vm.id.toString()).to.equal(mobj.id.toString());
+        expect(vm.mobj.id.toString()).to.equal(mobj.id.toString());
         expect(vm.state.localVars._caller.toString()).to.equal(childMobj.id.toString());
         expect(vm.state.ast).to.eql([{type: 'verb', src: '$a = 2'}]);
         expect(vm.state.localVars).to.eql({
