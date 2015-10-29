@@ -10,7 +10,7 @@ var ObjectId = require('mongodb').ObjectId;
 
 describe('MObject', function() {
 
-  var app, db, mobj, inheritObjId, childMobj, mobjChildren;
+  var app, db, mobj, inheritObjId, childMobj, childMobj2, mobjChildren;
 
   beforeEach(function(done) {
     this.timeout(5000); // Set timeout to 5 seconds, as Travis may take a while
@@ -86,6 +86,7 @@ describe('MObject', function() {
         }, function(err, res) {
           if(err) return done(err);
           mobjChildren.ctx.push(res.insertedId);
+          childMobj2 = new MObject(app, res.insertedId);
           cb();
         }); // Insert some dummy data
       },
@@ -601,6 +602,15 @@ describe('MObject', function() {
       });
     });
 
+    it('can accept an array for the name', function(done) {
+      mobj.resolveChildObj(['child', 'object'], function(err, mobj) {
+        expect(err).to.be.null;
+        expect(mobj).to.be.an.instanceof(MObject);
+        expect(mobj.id.toString()).to.equal(childMobj.id.toString());
+        done();
+      });
+    });
+
     it('returns null when no object was found', function(done) {
       mobj.resolveChildObj('banana', function(err, mobj) {
         expect(err).to.be.null;
@@ -676,13 +686,14 @@ describe('MObject', function() {
         expect(vm).to.be.an.instanceof(NML.VM);
         expect(vm.mobj.id.toString()).to.equal(mobj.id.toString());
         expect(vm.state.localVars._caller.toString()).to.equal(mobj.id.toString());
-        expect(vm.state.ast).to.eql([{type: 'verb', src: '$a = 1234'}]);
+        expect(vm.state.ast).to.eql([{ type: 'assign', op: '=', src: [ 1234 ], dst: { type: 'var', name: 'a' } }]);
         expect(vm.state.localVars).to.eql({
           _verb: 'test',
           _directObj: dirObj,
           _prepos: 'in',
           _indirectObj: indirObj,
-          _params: [dirObj, 'in', indirObj]
+          _params: [dirObj, 'in', indirObj],
+          _caller: mobj.id
         });
         done();
       });
@@ -718,32 +729,34 @@ describe('MObject', function() {
       });
     });
 
-    it('can resolve a direct object referenced by name to an id',
+    it('can resolve objects referenced by name to ids',
       function(done) {
       var indirObj = new ObjectId();
       var verbcall = {
         type: 'verbcall',
-        verb: 'childVerb',
+        verb: 'put',
         directObj: ['child', 'object'],
         prepos: 'in',
-        indirectObj: indirObj,
-        params: ['child', 'object', 'in', indirObj]
+        indirectObj: ['testobj'],
+        params: ['child', 'object', 'in', 'testobj']
       };
 
       mobj.verbcall(verbcall, function(err, vm) {
         expect(err).to.be.null;
         expect(vm).to.be.an.instanceof(NML.VM);
         // The VM is created in the context of the direct object mentioned, where the verb exists
-        expect(vm.mobj.id.toString()).to.equal(childMobj.id.toString());
-        expect(vm.state.ast).to.eql([{type: 'verb', src: '$a = 1'}]);
+        expect(vm.mobj.id.toString()).to.equal(mobj.id.toString());
+        expect(vm.state.ast).to.eql([{ type: 'assign', op: '=', src: [ 2 ], dst: { type: 'var', name: 'a' } }]);
         expect(vm.state.localVars._caller.toString()).to.equal(mobj.id.toString());
-        expect(vm.state.localVars._verb).to.equal('childVerb');
+        expect(vm.state.localVars._verb).to.equal('put');
         expect(vm.state.localVars._directObj.toString()).to.equal(childMobj.id.toString());
         expect(vm.state.localVars._prepos).to.equal('in');
-        expect(vm.state.localVars._indirectObj).to.eql(indirObj);
-        expect(vm.state.localVars._params).to.eql(['child', 'object', 'in', indirObj]);
+        expect(vm.state.localVars._indirectObj.toString()).to.equal(childMobj2.id.toString());
+        expect(vm.state.localVars._params).to.eql(['child', 'object', 'in', 'testobj']);
         done();
       });
     });
+
+    // TODO tests for referring verb on nearby object
   });
 });
