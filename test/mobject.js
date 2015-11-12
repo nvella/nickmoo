@@ -717,13 +717,14 @@ describe('MObject', function() {
         // The VM is created in the context of the parent object, where the verb exists
         expect(vm.mobj.id.toString()).to.equal(mobj.id.toString());
         expect(vm.state.localVars._caller.toString()).to.equal(childMobj.id.toString());
-        expect(vm.state.ast).to.eql([{type: 'verb', src: '$a = 2'}]);
+        expect(vm.state.ast).to.eql([{ type: 'assign', op: '=', src: [ 2 ], dst: { type: 'var', name: 'a' } }]);
         expect(vm.state.localVars).to.eql({
           _verb: 'put',
           _directObj: dirObj,
           _prepos: 'in',
           _indirectObj: indirObj,
-          _params: [dirObj, 'in', indirObj]
+          _params: [dirObj, 'in', indirObj],
+          _caller: childMobj.id
         });
         done();
       });
