@@ -2,7 +2,7 @@ var expect = require('chai').expect;
 var NML = require('../lib/nml');
 var async = require('async');
 
-LOOP_MAX = 10000;
+var LOOP_MAX = 10000;
 
 // Why is this here? I have no clue. It seems that the async library dislikes
 // my VM with nested loops. Maybe too many stack levels? It works for all the
@@ -685,6 +685,23 @@ describe('NML.VM', function() {
         expect(vm.state.localVars.i).to.equal(10);
         expect(vm.state.localVars.j).to.equal(5);
         expect(vm.state.localVars.out).to.equal(50);
+        done();
+      });
+    });
+
+    it('can delegate execution to a subvm if set', function(done) {
+      var hostVm = new NML.VM();
+      var subVm = new NML.VM();
+      hostVm.state.localVars.i = 0;
+      hostVm.state.ast = NML.Parser.codeToAst('while 1 == 1\n$i += 1\nend');
+      subVm.state.localVars.j = 0;
+      subVm.state.ast = NML.Parser.codeToAst('while 1 == 1\n$j += 1\nend');
+      hostVm.subVm = subVm; // Set the sub VM
+
+      times(100, hostVm.stepOnce.bind(hostVm), function(err) {
+        expect(err).to.be.null;
+        expect(hostVm.state.localVars.i).to.equal(0);
+        expect(subVm.state.localVars.j).to.be.above(25);
         done();
       });
     });

@@ -61,7 +61,7 @@ describe('MObject', function() {
           _verbs: {
             childVerb: {type: 'verb', src: '$a = 1'}
           },
-          _children: [],
+          _children: {type: 'array', ctx: []},
           _created: 12345,
           _inherit: inheritObjId,
           name: 'child object',
@@ -78,7 +78,7 @@ describe('MObject', function() {
         db.collection('objects').insertOne({
           _verbs: {
           },
-          _children: [],
+          _children: {type: 'array', ctx: []},
           _created: 12345,
           _inherit: inheritObjId,
           name: 'testobj',
@@ -717,13 +717,14 @@ describe('MObject', function() {
         // The VM is created in the context of the parent object, where the verb exists
         expect(vm.mobj.id.toString()).to.equal(mobj.id.toString());
         expect(vm.state.localVars._caller.toString()).to.equal(childMobj.id.toString());
-        expect(vm.state.ast).to.eql([{type: 'verb', src: '$a = 2'}]);
+        expect(vm.state.ast).to.eql([{ type: 'assign', op: '=', src: [ 2 ], dst: { type: 'var', name: 'a' } }]);
         expect(vm.state.localVars).to.eql({
           _verb: 'put',
           _directObj: dirObj,
           _prepos: 'in',
           _indirectObj: indirObj,
-          _params: [dirObj, 'in', indirObj]
+          _params: [dirObj, 'in', indirObj],
+          _caller: childMobj.id
         });
         done();
       });
@@ -744,7 +745,6 @@ describe('MObject', function() {
       mobj.verbcall(verbcall, function(err, vm) {
         expect(err).to.be.null;
         expect(vm).to.be.an.instanceof(NML.VM);
-        // The VM is created in the context of the direct object mentioned, where the verb exists
         expect(vm.mobj.id.toString()).to.equal(mobj.id.toString());
         expect(vm.state.ast).to.eql([{ type: 'assign', op: '=', src: [ 2 ], dst: { type: 'var', name: 'a' } }]);
         expect(vm.state.localVars._caller.toString()).to.equal(mobj.id.toString());
@@ -753,6 +753,32 @@ describe('MObject', function() {
         expect(vm.state.localVars._prepos).to.equal('in');
         expect(vm.state.localVars._indirectObj.toString()).to.equal(childMobj2.id.toString());
         expect(vm.state.localVars._params).to.eql(['child', 'object', 'in', 'testobj']);
+        done();
+      });
+    });
+
+    it('can create a vm in the context of referenced other object', function(done) {
+      var verbcall = {
+        type: 'verbcall',
+        verb: 'childVerb',
+        directObj: ['child', 'object'],
+        prepos: 'on',
+        indirectObj: ['testobj'],
+        params: ['child', 'object', 'on', 'testobj']
+      };
+
+      childMobj2.verbcall(verbcall, function(err, vm) {
+        expect(err).to.be.null;
+        expect(vm).to.be.an.instanceof(NML.VM);
+        // The vm should be created in the context of childmobj
+        expect(vm.mobj.id.toString()).to.equal(childMobj.id.toString());
+        expect(vm.state.ast).to.eql([{ type: 'assign', op: '=', src: [ 1 ], dst: { type: 'var', name: 'a' } }]);
+        expect(vm.state.localVars._caller.toString()).to.equal(childMobj2.id.toString());
+        expect(vm.state.localVars._verb).to.equal('childVerb');
+        expect(vm.state.localVars._directObj.toString()).to.equal(childMobj.id.toString());
+        expect(vm.state.localVars._prepos).to.equal('on');
+        expect(vm.state.localVars._indirectObj.toString()).to.equal(childMobj2.id.toString());
+        expect(vm.state.localVars._params).to.eql(['child', 'object', 'on', 'testobj']);
         done();
       });
     });
