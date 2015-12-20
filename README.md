@@ -42,4 +42,4 @@ Documentation for NML is in the works.
 
 ## Contributing
 
-Pull requests are welcome, currently I'm working on the connection handler (lib/connection.js). Please write tests (using mocha and chai) for any features you introduce. Better contribution documentation is coming soon...
+I wouldn't say the project is in a state quite yet where it's ready for contributions. If you see something that can be improved, submit a pull request anyway. Once the server can actually start I'll begin to make an effort to improve contribution documentation.
