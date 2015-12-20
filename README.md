@@ -9,13 +9,19 @@ NickMOO is built with NodeJS and MongoDB.
 
 - [x] TCP server
 - [x] Connection management
-- [x] Welcome message
+- [x] <s>Welcome message</s> *made redundant*
 - [x] NML
- - [x] Script Parser (mostly complete)
- - [x] VM (mostly complete, verbcalls currently not implemented but will be when MObject is complete)
-- [ ] Objects (MObject)
- - [ ] Javascript->DB mapping (in progress)
-- [ ] Player handling
+ - [x] Script Parser
+ - [x] VM 
+- [x] Objects (MObject)
+ - [x] Javascript->DB mapping
+- [ ] SubVMs and verbcall execution (in progress)
+- [ ] Native (call-into-js) verbs
+- [ ] Connection-MObj pairing
+- [ ] NML stdlib
+ - [ ] IO
+ - [ ] etc etc
+- [ ] Documentation
 
 *to be expanded*
 
