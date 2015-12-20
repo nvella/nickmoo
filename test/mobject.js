@@ -56,7 +56,7 @@ describe('MObject', function() {
           cb();
         }); // Insert some dummy data
       },
-      function(cb) { // Create an object that will be a child of the standard objectw
+      function(cb) { // Create an object that will be a child of the standard object
         db.collection('objects').insertOne({
           _verbs: {
             childVerb: {type: 'verb', src: '$a = 1'}
