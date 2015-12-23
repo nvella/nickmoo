@@ -1,6 +1,8 @@
 var expect = require('chai').expect;
 var NML = require('../lib/nml');
+var MObject = require('../lib/mobject');
 var async = require('async');
+var MongoClient = require('mongodb').MongoClient;
 
 var LOOP_MAX = 10000;
 
@@ -558,7 +560,7 @@ describe('NML.VM', function() {
 
     it('can branch on an if statement evaluating to true', function(done) {
       var vm = new NML.VM();
-      vm.state.ast = NML.Parser.codeToAst('if 5 == 5\nsay Hi\nend');
+      vm.state.ast = NML.Parser.codeToAst('if 5 == 5\n$i = 1\nend');
       vm.stepOnce(function(err) {
         expect(vm.state.ip).to.eql([0, 0]);
         done();
@@ -567,7 +569,7 @@ describe('NML.VM', function() {
 
     it('can skip an if statement evaluating to false', function(done) {
       var vm = new NML.VM();
-      vm.state.ast = NML.Parser.codeToAst('if 5 == 6\nsay Hi\nend\nsay Bye');
+      vm.state.ast = NML.Parser.codeToAst('if 5 == 6\n$i = 1\nend\n$j = 2');
       vm.stepOnce(function(err) {
         expect(vm.state.ip).to.eql([1]);
         done();
@@ -577,7 +579,7 @@ describe('NML.VM', function() {
     it('can return from an if statement at the end of the block',
       function(done) {
       var vm = new NML.VM();
-      vm.state.ast = NML.Parser.codeToAst('if 5 == 5\nsay Hi\nend\nsay Bye');
+      vm.state.ast = NML.Parser.codeToAst('if 5 == 5\n$i = 1\nend\n$i = 1');
       async.times(2, function(i, next) {
         vm.stepOnce(next);
       }, function(err) {
@@ -590,7 +592,7 @@ describe('NML.VM', function() {
     it('can skip an if statement that evals to false at end the script',
       function(done) {
       var vm = new NML.VM();
-      vm.state.ast = NML.Parser.codeToAst('if 5 == 6\nsay Hi\nend');
+      vm.state.ast = NML.Parser.codeToAst('if 5 == 6\n$i = 1\nend');
       vm.stepOnce(function(err) {
         expect(err).to.be.an.instanceof(NML.Errors.EndOfScriptError);
         expect(vm.state.ip).to.eql([0]);
@@ -601,7 +603,7 @@ describe('NML.VM', function() {
     it('can error when returning from an if stmt placed at the end of script',
       function(done) {
       var vm = new NML.VM();
-      vm.state.ast = NML.Parser.codeToAst('if 5 == 5\nsay Hi\nend');
+      vm.state.ast = NML.Parser.codeToAst('if 5 == 5\n$i = 1\nend');
       var lastIndex;
       async.times(2, function(i, next) {
         lastIndex = i;
@@ -617,7 +619,7 @@ describe('NML.VM', function() {
     it('can complete an if stmt with a body of multiple lines',
       function(done) {
       var vm = new NML.VM();
-      vm.state.ast = NML.Parser.codeToAst('if 5 == 5\nsay Hi\nsay There\nend');
+      vm.state.ast = NML.Parser.codeToAst('if 5 == 5\n$i = 1\n$j = 2\nend');
       var lastIndex;
       async.times(3, function(i, next) {
         lastIndex = i;
@@ -633,7 +635,7 @@ describe('NML.VM', function() {
     it('can enter a while loop when the condition provided is true',
       function(done) {
       var vm = new NML.VM();
-      vm.state.ast = NML.Parser.codeToAst('while 5 == 5\nsay Hi\nsay there\nend');
+      vm.state.ast = NML.Parser.codeToAst('while 5 == 5\n$i = 1\n$j = 2\nend');
       vm.stepOnce(function(err) {
         expect(err).to.be.null;
         expect(vm.state.ip).to.eql([0, 0]);
@@ -644,7 +646,7 @@ describe('NML.VM', function() {
     it('can loop around in a while loop when condition provided is true',
       function(done) {
       var vm = new NML.VM();
-      vm.state.ast = NML.Parser.codeToAst('while 5 == 5\nsay Hi\nsay there\nend');
+      vm.state.ast = NML.Parser.codeToAst('while 5 == 5\n$i = 1\n$j = 2\nend');
       async.times(10, function(i, next) {
         vm.stepOnce(function(err) {
           expect(err).to.be.null; // err should always be null as we'll never exit the loop
@@ -703,6 +705,98 @@ describe('NML.VM', function() {
         expect(hostVm.state.localVars.i).to.equal(0);
         expect(subVm.state.localVars.j).to.be.above(25);
         done();
+      });
+    });
+
+    describe('verbcalls', function() {
+      var db;
+      var mobj;
+      var app;
+
+      // A full database (no mocking) is needed for this section of tests as subvms will be operating on the
+      // db object, which is too much effort to mock.
+      beforeEach(function(done) {
+        this.timeout(5000); // Set timeout to 5 seconds, as Travis may take a while
+                            // to get mongo set up.
+
+        async.series([
+          function(cb) {
+            MongoClient.connect('mongodb://127.0.0.1:27017/nickmoo-test', function(err, _db) {
+              if (err) throw err;
+              db = _db;
+              app = {
+                rootObj: new MObject(),
+                collections: {objects: db.collection('objects')},
+                mobj: function (id) {
+                  switch (typeof(id)) {
+                    case 'string':
+                      return new MObject(this, new ObjectId(id));
+                    case 'object':
+                      if (id instanceof ObjectId) return new MObject(this, id);
+                    // Otherwise, fall through to default
+                    default:
+                      return new MObject(this); // Just return a new mobject
+                  }
+                }
+              };
+              cb();
+            });
+          },
+          function(cb) {db.collection('objects').deleteMany({}, cb);}, // Remove everything in the objects collection
+          function(cb) {
+            db.collection('objects').insertOne({
+              _verbs: {
+                verb1: {type: 'verb', src: '%propA = 1'},
+                verb2: {type: 'verb', src: '%propB = 2'}
+              },
+              _children: {type: 'array', ctx: []},
+              _created: 12345,
+              _inherit: null,
+              ayy: 'lmao'
+            }, function(err, res) {
+              if(err) return done(err);
+              // Find the id and create a new MObject with it
+              mobj = new MObject(app, res.insertedId);
+              cb();
+            }); // Insert some dummy data
+          },
+          function() {
+            done();
+          }
+        ], done);
+      });
+
+      afterEach(function(done) {
+        db.close(false, done);
+      });
+
+      it('can execute a verb without arguments', function(done) {
+        var vm = new NML.VM(app, mobj, NML.Parser.codeToAst('verb1()'));
+
+        async.series([
+          function(cb) {
+            vm.stepOnce(function(err) { //cb1
+              // On the first step ...
+              expect(err).to.be.null; // Expect there to be no error
+              expect(vm.subVm).to.be.an.instanceof(NML.VM); // Expect a subvm to exist
+              expect(vm.subVm.state.ast).to.eql(NML.Parser.codeToAst('%propA = 1')); // Expect the subvm's AST to be loaded with the source of the verb we're attempting to call
+              cb();
+            });
+          },
+          function(cb) {
+            vm.stepOnce(function(err) { //cb2
+              // On the second step ...
+              expect(err).to.be.an.instanceof(NML.Errors.EndOfScriptError);
+              expect(vm.subVm).to.be.null; // The subvm should've executed it's statement and it should no-longer exist
+              // Check if the property has been set correctly
+              mobj.getProp('propA', function(err, value) {
+                expect(err).to.be.null;
+                expect(value).to.equal(1); // Expect the value to equal 1.
+                cb();
+              });
+            });
+          }
+        ], done);
       });
     });
   });
