@@ -798,7 +798,8 @@ describe('NML.VM', function() {
             db.collection('objects').insertOne({
               _verbs: {
                 verb1: {type: 'verb', src: '%propA = 1'},
-                verb2: {type: 'verb', src: '%propB = 2'}
+                verb2: {type: 'verb', src: '%propB = 2'},
+                badSyntax: {type: 'verb', src: 'end\n'}
               },
               _children: {type: 'array', ctx: []},
               _created: 12345,
@@ -848,6 +849,16 @@ describe('NML.VM', function() {
             });
           }
         ], done);
+      });
+
+      it('can handle syntax errors in verbs', function(done) {
+        var vm = new NML.VM(app, mobj, NML.Parser.codeToAst('badSyntax()'));
+        vm.stepOnce(function(err) {
+          expect(err).to.be.an.instanceof(NML.Errors.NMLSyntaxError);
+          expect(vm.subVm).to.be.null;
+          expect(vm.state.ip).to.eql([0]);
+          done();
+        });
       });
     });
   });
