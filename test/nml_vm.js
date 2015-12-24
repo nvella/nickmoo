@@ -141,6 +141,57 @@ describe('NML.VM', function() {
       });
     });
 
+    it('can start resolution of a verbcall', function(done) {
+      var subVm = new NML.VM();
+      var mobj = {
+        verbcall: function(value, cb) {
+          expect(value).to.be.an('object');
+          expect(value.type).to.equal('verbcall');
+          expect(cb).to.be.a('function');
+          cb(null, subVm);
+        }
+      };
+
+      var vm = new NML.VM(null, mobj);
+
+      vm._endStepCallback = function(err) {
+        expect(err).to.be.null;
+        expect(vm.subVm).to.equal(subVm);
+        expect(vm._endResolveCallback).to.equal('END_RESOLVE_CALLBACK');
+        done();
+      };
+
+      vm.resolveValue({type: 'verbcall',
+        verb: 'verb1',
+        directObj: null,
+        prepos: null,
+        indirectObj: null,
+        params: []}, 'END_RESOLVE_CALLBACK');
+    });
+
+    it('throws an error when MObject#verbcall errors', function(done) {
+      var mobj = { verbcall: function(value, cb) { cb(new Error('testError')); } };
+      var vm = new NML.VM(null, mobj);
+
+      vm._endStepCallback = function(err) {
+        throw '_endStepCallback shouldn\'t of been called';
+      };
+
+      vm.resolveValue({type: 'verbcall',
+        verb: 'verb1',
+        directObj: null,
+        prepos: null,
+        indirectObj: null,
+        params: []},
+      function(err, newVm) {
+        expect(err).to.be.an.instanceof(Error);
+        expect(err.message).to.equal('testError');
+        expect(vm.subVm).to.be.null;
+        expect(newVm).to.be.undefined;
+        done();
+      });
+    });
+
     it('throws an error when trying to index a nonindexable local var',
       function(done) {
       var vm = new NML.VM();
