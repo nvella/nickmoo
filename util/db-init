@@ -54,7 +54,7 @@ async.series([
     title('WARNING');
     console.log('This tool will erase all NickMOO data in the ' +
                 'database specified in the configuration above. Do you wish ' +
-                'to continue?')
+                'to continue?');
     rl.question('y/n>', function(ans) {
       if(ans.toLowerCase() !== 'y') process.exit(1);
       callback();
@@ -104,7 +104,7 @@ async.series([
       // The next line sets the verb that handles the childJoin event, which is
       // emitted to a parent object whenever a child joins it
       // In this case, it calls the 'tell' verb, which sends an object-to-object
-      // message (The recipient will receieve a 'msg' event which it can handles
+      // message (The recipient will receive a 'msg' event which it can handles
       // however it chooses. In case of the player, it will call into native
       // Javascript code which will send the message to the socket.)
       function(cb) { roomClassObj.setVerb('_on_childJoin', 'tell($directObj %desc)', cb);},
