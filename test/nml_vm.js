@@ -797,7 +797,7 @@ describe('NML.VM', function() {
           function(cb) {
             db.collection('objects').insertOne({
               _verbs: {
-                verb1: {type: 'verb', src: '%propA = 1'},
+                verb1: {type: 'verb', src: '$varA = 2\n%propA = 1'},
                 verb2: {type: 'verb', src: '%propB = 2'},
                 badSyntax: {type: 'verb', src: 'end\n'}
               },
@@ -831,7 +831,14 @@ describe('NML.VM', function() {
               // On the first step ...
               expect(err).to.be.null; // Expect there to be no error
               expect(vm.subVm).to.be.an.instanceof(NML.VM); // Expect a subvm to exist
-              expect(vm.subVm.state.ast).to.eql(NML.Parser.codeToAst('%propA = 1')); // Expect the subvm's AST to be loaded with the source of the verb we're attempting to call
+              expect(vm.subVm.state.ast).to.eql(NML.Parser.codeToAst('$varA = 2\n%propA = 1')); // Expect the subvm's AST to be loaded with the source of the verb we're attempting to call
+              cb();
+            });
+          },
+          function(cb) {
+            vm.stepOnce(function(err) { //cb2
+              expect(err).to.be.null;
+              expect(vm.subVm.state.localVars.varA).to.equal(2);
               cb();
             });
           },
